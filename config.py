@@ -1,6 +1,3 @@
-import math
-import heapq
-
 # ==============================================================================
 # CLASE 1: Configuración (Config)
 # Responsabilidad: Almacenar todas las constantes y parámetros del juego.
@@ -26,5 +23,5 @@ class Config:
     MAX_STUCK_TURNS = 5
     
     # Parámetros del Mundo
-    NUM_BALLS = 100
+    NUM_BALLS = 10
     STATION_SIZE = GRID_SIZE * 1; BASKET_SIZE = GRID_SIZE * 1

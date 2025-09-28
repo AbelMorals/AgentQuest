@@ -16,7 +16,7 @@ class World:
         self.generate_layout()
 
     def generate_layout(self):
-        """Crea una disposición aleatoria para los objetos."""
+        # Crea una disposición aleatoria para los objetos.
         while True:
             x = random.randrange(0, Config.WIDTH, Config.GRID_SIZE)
             y = random.randrange(Config.HUD_HEIGHT, Config.HEIGHT, Config.GRID_SIZE)
