@@ -7,94 +7,93 @@ from config import Config
 # decisiones, solo dibuja lo que le dicen las otras clases.
 # ==============================================================================
 class Render:
-    def __init__(self, screen):
-        self.screen = screen
+    def __init__(self, pantalla):
+        self.pantalla = pantalla
         pygame.font.init()
-        self.font = pygame.font.SysFont("Arial", 22)
-        self.small_font = pygame.font.SysFont("Consolas", 12)
-        self.big_font = pygame.font.SysFont("Arial Black", 70)
+        self.fuente = pygame.font.SysFont("Arial", 22)
+        self.fuente_pequena = pygame.font.SysFont("Consolas", 12)
+        self.fuente_grande = pygame.font.SysFont("Arial Black", 70)
 
-    def draw(self, game_state, world, robot, developer_mode, pathfinder):
-        self.screen.fill(Config.BACKGROUND)
-        self._draw_grid()
+    def dibujar(self, estado_juego, mundo, robot, modo_desarrollador, pathfinder):
+        self.pantalla.fill(Config.FONDO)
+        self._dibujar_celda()
 
-        pygame.draw.rect(self.screen, Config.BLACK, world.station_rect); pygame.draw.rect(self.screen, Config.WHITE, world.station_rect, 2)
-        pygame.draw.rect(self.screen, Config.DARK_GREEN, world.basket_rect); pygame.draw.rect(self.screen, Config.WHITE, world.basket_rect, 2)
-        for ball_pos in world.balls:
-            pygame.draw.circle(self.screen, Config.RED, ball_pos, Config.GRID_SIZE // 2)
+        pygame.draw.rect(self.pantalla, Config.NEGRO, mundo.rect_estacion); pygame.draw.rect(self.pantalla, Config.BLANCO, mundo.rect_estacion, 2)
+        pygame.draw.rect(self.pantalla, Config.VERDE_OSCURO, mundo.rect_canasta); pygame.draw.rect(self.pantalla, Config.BLANCO, mundo.rect_canasta, 2)
+        for pos_pelota in mundo.pelotas:
+            pygame.draw.circle(self.pantalla, Config.ROJO, pos_pelota, Config.TAMANO_CELDA // 2)
 
-        if developer_mode:
-            self._draw_astar_scores(pathfinder)
+        if modo_desarrollador:
+            self._dibujar_puntajes_astar(pathfinder)
 
-        self._draw_robot(robot)
-        self._draw_hud(robot)
-        self._draw_overlays(game_state)
+        self._dibujar_robot(robot)
+        self._dibujar_hud(robot)
+        self._dibujar_overlays(estado_juego)
         pygame.display.flip()
 
-    def _draw_astar_scores(self, pathfinder):
-        if not pathfinder.gscore or not pathfinder.goal_pos:
+    def _dibujar_puntajes_astar(self, pathfinder):
+        if not pathfinder.puntaje_g or not pathfinder.pos_objetivo:
             return
 
-        for node, g_score in pathfinder.gscore.items():
-            h_score = pathfinder.heuristic(node, pathfinder.goal_pos)
-            p_score = g_score + h_score
+        for nodo, puntaje_g in pathfinder.puntaje_g.items():
+            puntaje_h = pathfinder.heuristica(nodo, pathfinder.pos_objetivo)
+            puntaje_p = puntaje_g + puntaje_h
 
-            px = node[0] * Config.GRID_SIZE
-            py = node[1] * Config.GRID_SIZE
+            px = nodo[0] * Config.TAMANO_CELDA
+            py = nodo[1] * Config.TAMANO_CELDA
 
-            # Amarillo si es parte del camino final
-            color = Config.YELLOW if node in pathfinder.final_path else Config.WHITE
+            color = Config.AMARILLO if nodo in pathfinder.camino_final else Config.BLANCO
 
-            h_text = self.small_font.render(f"H:{h_score}", True, color)
-            p_text = self.small_font.render(f"P:{p_score}", True, color)
+            texto_h = self.fuente_pequena.render(f"H:{puntaje_h}", True, color)
+            texto_p = self.fuente_pequena.render(f"P:{puntaje_p}", True, color)
 
-            self.screen.blit(h_text, (px + 3, py + 4))
-            self.screen.blit(p_text, (px + 3, py + 18))
+            self.pantalla.blit(texto_h, (px + 3, py + 4))
+            self.pantalla.blit(texto_p, (px + 3, py + 18))
 
-    def _draw_grid(self):
-        for x in range(0, Config.WIDTH, Config.GRID_SIZE):
-            pygame.draw.line(self.screen, (40, 40, 60), (x, Config.HUD_HEIGHT), (x, Config.HEIGHT))
-        for y in range(Config.HUD_HEIGHT, Config.HEIGHT, Config.GRID_SIZE):
-            pygame.draw.line(self.screen, (40, 40, 60), (0, y), (Config.WIDTH, y))
+    def _dibujar_celda(self):
+        for x in range(0, Config.ANCHO, Config.TAMANO_CELDA):
+            pygame.draw.line(self.pantalla, (40, 40, 60), (x, Config.ALTURA_HUD), (x, Config.ALTO))
+        for y in range(Config.ALTURA_HUD, Config.ALTO, Config.TAMANO_CELDA):
+            pygame.draw.line(self.pantalla, (40, 40, 60), (0, y), (Config.ANCHO, y))
 
-    def _draw_robot(self, robot):
-        robot_color = Config.BLUE
-        if robot.state == 'CHARGING': robot_color = Config.ORANGE
-        if robot.state == 'DEAD': robot_color = (50, 50, 50)
-        pygame.draw.rect(self.screen, robot_color, robot.rect)
-        if robot.is_carrying:
-            pygame.draw.circle(self.screen, Config.YELLOW, robot.rect.center, Config.GRID_SIZE // 2 - 5)
+    def _dibujar_robot(self, robot):
+        color_robot = Config.AZUL
+        if robot.estado == 'CHARGING': color_robot = Config.NARANJA
+        if robot.estado == 'DEAD': color_robot = (50, 50, 50)
+        pygame.draw.rect(self.pantalla, color_robot, robot.rect)
+        if robot.lleva_pelota:
+            pygame.draw.circle(self.pantalla, Config.AMARILLO, robot.rect.center, Config.TAMANO_CELDA // 2 - 5)
 
-    def _draw_hud(self, robot):
-        pygame.draw.rect(self.screen, (10, 10, 20), (0, 0, Config.WIDTH, Config.HUD_HEIGHT))
-        bar_width, bar_height = 200, 25
-        charge_ratio = max(0, robot.charge / Config.MAX_CHARGE)
-        current_bar_width = bar_width * charge_ratio
-        bar_color = Config.GREEN if charge_ratio > 0.6 else Config.YELLOW if charge_ratio > 0.3 else Config.RED
-        pygame.draw.rect(self.screen, Config.BLACK, (10, 15, bar_width, bar_height))
-        pygame.draw.rect(self.screen, bar_color, (10, 15, current_bar_width, bar_height))
-        status_text = self.font.render(f"Estado: {robot.state} | Recogidas: {robot.collected}/{Config.NUM_BALLS}", True, Config.WHITE)
-        self.screen.blit(status_text, (220, 17))
+    def _dibujar_hud(self, robot):
+        pygame.draw.rect(self.pantalla, (10, 10, 20), (0, 0, Config.ANCHO, Config.ALTURA_HUD))
+        ancho_barra, alto_barra = 200, 25
+        proporcion_carga = max(0, robot.carga / Config.CARGA_MAXIMA)
+        ancho_barra_actual = ancho_barra * proporcion_carga
+        color_barra = Config.VERDE if proporcion_carga > 0.6 else Config.AMARILLO if proporcion_carga > 0.3 else Config.ROJO
+        pygame.draw.rect(self.pantalla, Config.NEGRO, (10, 15, ancho_barra, alto_barra))
+        pygame.draw.rect(self.pantalla, color_barra, (10, 15, ancho_barra_actual, alto_barra))
+        texto_estado = self.fuente.render(f"Estado: {robot.estado} | Recogidas: {robot.recogidas}/{Config.NUM_PELOTAS}", True, Config.BLANCO)
+        self.pantalla.blit(texto_estado, (220, 17))
         
 
-    def _draw_overlays(self, game_state):
-        if game_state == 'MENU':
-            menu_text = self.big_font.render("ROBOT LIMPIADOR", True, Config.WHITE)
-            self.screen.blit(menu_text, (Config.WIDTH//2 - menu_text.get_width()//2, Config.HEIGHT//2 - 100))
-            start_text = self.font.render("Presiona ENTER para iniciar", True, Config.WHITE)
-            self.screen.blit(start_text, (Config.WIDTH//2 - start_text.get_width()//2, Config.HEIGHT//2))
-        elif game_state == 'PAUSED':
-            overlay = pygame.Surface((Config.WIDTH, Config.HEIGHT), pygame.SRCALPHA)
+    def _dibujar_overlays(self, estado_juego):
+        if estado_juego == 'MENU':
+            texto_menu = self.fuente_grande.render("ROBOT LIMPIADOR", True, Config.BLANCO)
+            self.pantalla.blit(texto_menu, (Config.ANCHO//2 - texto_menu.get_width()//2, Config.ALTO//2 - 100))
+            texto_inicio = self.fuente.render("Presiona ENTER para iniciar", True, Config.BLANCO)
+            self.pantalla.blit(texto_inicio, (Config.ANCHO//2 - texto_inicio.get_width()//2, Config.ALTO//2))
+        elif estado_juego == 'PAUSED':
+            overlay = pygame.Surface((Config.ANCHO, Config.ALTO), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 150))
-            self.screen.blit(overlay, (0, 0))
-            pause_title = self.big_font.render("PAUSADO", True, Config.WHITE)
-            self.screen.blit(pause_title, (Config.WIDTH//2 - pause_title.get_width()//2, Config.HEIGHT//2 - pause_title.get_height()//2))
-        elif game_state == 'GAME_OVER':
-            win_text = self.big_font.render("¡MISIÓN CUMPLIDA!", True, Config.YELLOW)
-            self.screen.blit(win_text, (Config.WIDTH//2 - win_text.get_width()//2, Config.HEIGHT//2 - win_text.get_height()//2))
-        elif game_state == 'GAME_OVER_STUCK':
-            stuck_text = self.big_font.render("SIN RUTA POSIBLE", True, Config.ORANGE)
-            self.screen.blit(stuck_text, (Config.WIDTH//2 - stuck_text.get_width()//2, Config.HEIGHT//2 - stuck_text.get_height()//2))
-        elif game_state == 'DEAD':
-            dead_text = self.big_font.render("BATERÍA AGOTADA", True, Config.RED)
-            self.screen.blit(dead_text, (Config.WIDTH//2 - dead_text.get_width()//2, Config.HEIGHT//2 - dead_text.get_height()//2))
+            self.pantalla.blit(overlay, (0, 0))
+            titulo_pausa = self.fuente_grande.render("PAUSADO", True, Config.BLANCO)
+            self.pantalla.blit(titulo_pausa, (Config.ANCHO//2 - titulo_pausa.get_width()//2, Config.ALTO//2 - titulo_pausa.get_height()//2))
+        elif estado_juego == 'GAME_OVER':
+            texto_ganar = self.fuente_grande.render("¡MISIÓN CUMPLIDA!", True, Config.AMARILLO)
+            self.pantalla.blit(texto_ganar, (Config.ANCHO//2 - texto_ganar.get_width()//2, Config.ALTO//2 - texto_ganar.get_height()//2))
+        elif estado_juego == 'GAME_OVER_STUCK':
+            texto_atascado = self.fuente_grande.render("SIN RUTA POSIBLE", True, Config.NARANJA)
+            self.pantalla.blit(texto_atascado, (Config.ANCHO//2 - texto_atascado.get_width()//2, Config.ALTO//2 - texto_atascado.get_height()//2))
+        elif estado_juego == 'DEAD':
+            texto_muerto = self.fuente_grande.render("BATERÍA AGOTADA", True, Config.ROJO)
+            self.pantalla.blit(texto_muerto, (Config.ANCHO//2 - texto_muerto.get_width()//2, Config.ALTO//2 - texto_muerto.get_height()//2))

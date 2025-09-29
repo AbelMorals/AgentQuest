@@ -4,24 +4,24 @@
 # Facilita cambiar la configuración sin tener que buscar en todo el código.
 # ==============================================================================
 class Config:
-    GRID_SIZE = 30
-    HUD_HEIGHT = 60
-    WIDTH, HEIGHT = 810, 600 + HUD_HEIGHT
+    TAMANO_CELDA = 30
+    ALTURA_HUD = 60
+    ANCHO, ALTO = 810, 600 + ALTURA_HUD
 
     # Colores y Fuentes
-    BLACK = (0, 0, 0); WHITE = (220, 220, 220); GREEN = (0, 200, 0)
-    DARK_GREEN = (0, 100, 0); RED = (200, 0, 0); BLUE = (0, 120, 255)
-    BACKGROUND = (30, 30, 50); YELLOW = (255, 220, 0); ORANGE = (255, 150, 0)
-    PATH_COLOR = (80, 80, 100)
+    NEGRO = (0, 0, 0); BLANCO = (220, 220, 220); VERDE = (0, 200, 0)
+    VERDE_OSCURO = (0, 100, 0); ROJO = (200, 0, 0); AZUL = (0, 120, 255)
+    FONDO = (30, 30, 50); AMARILLO = (255, 220, 0); NARANJA = (255, 150, 0)
+    COLOR_CAMINO = (80, 80, 100)
     
     # Parámetros del Robot
-    ROBOT_ANIMATION_SPEED = 5
-    robot_decision_cooldown = 100
-    MAX_CHARGE = 600; EMERGENCY_CHARGE = 250; CHARGE_PER_MOVE = 2
-    RECHARGE_RATE = MAX_CHARGE / 30 
-    BATTERY_SAFETY_MARGIN = 1.25
-    MAX_STUCK_TURNS = 5
+    VELOCIDAD_ANIMACION_ROBOT = 5
+    enfriamiento_decision_robot = 100
+    CARGA_MAXIMA = 600; CARGA_EMERGENCIA = 250; CARGA_POR_MOVIMIENTO = 2
+    TASA_RECARGA = CARGA_MAXIMA / 30 
+    MARGEN_SEGURIDAD_BATERIA = 1.25
+    MAX_TURNOS_ATASCADO = 3
     
     # Parámetros del Mundo
-    NUM_BALLS = 10
-    STATION_SIZE = GRID_SIZE * 1; BASKET_SIZE = GRID_SIZE * 1
+    NUM_PELOTAS = 10
+    TAMANO_ESTACION = TAMANO_CELDA * 1; TAMANO_CANASTA = TAMANO_CELDA * 1

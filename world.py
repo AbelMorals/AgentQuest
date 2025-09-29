@@ -9,29 +9,29 @@ from config import Config
 # ==============================================================================
 class World:
     def __init__(self):
-        self.station_rect = pygame.Rect(Config.GRID_SIZE, Config.GRID_SIZE + Config.HUD_HEIGHT, Config.STATION_SIZE, Config.STATION_SIZE)
-        self.basket_rect = pygame.Rect(Config.WIDTH - Config.BASKET_SIZE - Config.GRID_SIZE, Config.HEIGHT - Config.BASKET_SIZE - Config.GRID_SIZE, Config.BASKET_SIZE, Config.BASKET_SIZE)
-        self.balls = []
-        self.robot_start_pos = (0, 0)
-        self.generate_layout()
+        self.rect_estacion = pygame.Rect(Config.TAMANO_CELDA, Config.TAMANO_CELDA + Config.ALTURA_HUD, Config.TAMANO_ESTACION, Config.TAMANO_ESTACION)
+        self.rect_canasta = pygame.Rect(Config.ANCHO - Config.TAMANO_CANASTA - Config.TAMANO_CELDA, Config.ALTO - Config.TAMANO_CANASTA - Config.TAMANO_CELDA, Config.TAMANO_CANASTA, Config.TAMANO_CANASTA)
+        self.pelotas = []
+        self.pos_inicio_robot = (0, 0)
+        self.generar_disposicion()
 
-    def generate_layout(self):
+    def generar_disposicion(self):
         # Crea una disposición aleatoria para los objetos.
         while True:
-            x = random.randrange(0, Config.WIDTH, Config.GRID_SIZE)
-            y = random.randrange(Config.HUD_HEIGHT, Config.HEIGHT, Config.GRID_SIZE)
-            robot_r = pygame.Rect(x, y, Config.GRID_SIZE, Config.GRID_SIZE)
-            if not robot_r.colliderect(self.station_rect) and not robot_r.colliderect(self.basket_rect):
-                self.robot_start_pos = (x, y)
+            x = random.randrange(0, Config.ANCHO, Config.TAMANO_CELDA)
+            y = random.randrange(Config.ALTURA_HUD, Config.ALTO, Config.TAMANO_CELDA)
+            rect_robot = pygame.Rect(x, y, Config.TAMANO_CELDA, Config.TAMANO_CELDA)
+            if not rect_robot.colliderect(self.rect_estacion) and not rect_robot.colliderect(self.rect_canasta):
+                self.pos_inicio_robot = (x, y)
                 break
 
-        self.balls = []
-        obstacles = [self.station_rect, self.basket_rect, robot_r]
-        while len(self.balls) < Config.NUM_BALLS:
-            ball_x = random.randrange(0, Config.WIDTH, Config.GRID_SIZE) + Config.GRID_SIZE // 2
-            ball_y = random.randrange(Config.HUD_HEIGHT, Config.HEIGHT, Config.GRID_SIZE) + Config.GRID_SIZE // 2
-            ball_center = (ball_x, ball_y)
-            ball_r = pygame.Rect(ball_x - Config.GRID_SIZE//2, ball_y - Config.GRID_SIZE//2, Config.GRID_SIZE, Config.GRID_SIZE)
-            if not any(ball_r.colliderect(obs) for obs in obstacles) and ball_center not in self.balls:
-                self.balls.append(ball_center)
-                obstacles.append(ball_r)
+        self.pelotas = []
+        obstaculos = [self.rect_estacion, self.rect_canasta, rect_robot]
+        while len(self.pelotas) < Config.NUM_PELOTAS:
+            pelota_x = random.randrange(0, Config.ANCHO, Config.TAMANO_CELDA) + Config.TAMANO_CELDA // 2
+            pelota_y = random.randrange(Config.ALTURA_HUD, Config.ALTO, Config.TAMANO_CELDA) + Config.TAMANO_CELDA // 2
+            centro_pelota = (pelota_x, pelota_y)
+            rect_pelota = pygame.Rect(pelota_x - Config.TAMANO_CELDA//2, pelota_y - Config.TAMANO_CELDA//2, Config.TAMANO_CELDA, Config.TAMANO_CELDA)
+            if not any(rect_pelota.colliderect(obs) for obs in obstaculos) and centro_pelota not in self.pelotas:
+                self.pelotas.append(centro_pelota)
+                obstaculos.append(rect_pelota)

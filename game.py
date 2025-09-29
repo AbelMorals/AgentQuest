@@ -14,86 +14,92 @@ from pathfinder import Pathfinder
 class Game:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((Config.WIDTH, Config.HEIGHT))
+        self.pantalla = pygame.display.set_mode((Config.ANCHO, Config.ALTO))
         pygame.display.set_caption("Robot Limpiador v2.1")
-        self.clock = pygame.time.Clock()
-        self.game_state = 'MENU'
-        self.renderer = Render(self.screen)
+        self.reloj = pygame.time.Clock()
+        self.estado_juego = 'MENU'
+        self.renderizador = Render(self.pantalla)
         self.pathfinder = Pathfinder()
-        self.developer_mode = False
-        self.dev_step_request = False  # para tecla S (paso a paso)
-        self.dev_hold = False           # para tecla A (continuo)
-        self.reset()
+        self.modo_desarrollador = False
+        self.paso_dev = False  # para tecla S (paso a paso)
+        self.mantener_dev = False  # para tecla A (continuo)
+        self.reiniciar()
 
-    def reset(self):
-        self.world = World()
-        self.robot = Robot(self.world.robot_start_pos[0], self.world.robot_start_pos[1])
-        self.game_state = 'MENU'
-        self.pathfinder.clear()
+    def reiniciar(self):
+        self.mundo = World()
+        self.robot = Robot(self.mundo.pos_inicio_robot[0], self.mundo.pos_inicio_robot[1])
+        self.estado_juego = 'MENU'
+        self.pathfinder.limpiar()
 
-    def run(self):
-        running = True
-        while running:
-            running = self.handle_events()
-            self.update()
-            self.render()
-            self.clock.tick(60)
+    def ejecutar(self):
+        corriendo = True
+        while corriendo:
+            corriendo = self.manejar_eventos()
+            self.actualizar()
+            self.dibujar()
+            self.reloj.tick(60)
         pygame.quit()
         sys.exit()
 
-    def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+    def manejar_eventos(self):
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
                 return False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
                     return False
-                if event.key == pygame.K_RETURN and self.game_state == 'MENU':
-                    self.game_state = 'RUNNING'
-                if event.key == pygame.K_SPACE and self.game_state in ['RUNNING', 'PAUSED']:
-                    self.game_state = 'PAUSED' if self.game_state == 'RUNNING' else 'RUNNING'
-                if event.key == pygame.K_r and self.game_state != 'MENU':
-                    self.reset()
-                if event.key == pygame.K_d and self.game_state == 'RUNNING':
-                    self.developer_mode = not self.developer_mode
-                if event.key == pygame.K_s and self.developer_mode and self.game_state == 'RUNNING':
-                    self.dev_step_request = True  # paso único con S
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_a:
-                    self.dev_hold = False  # dejar de mantener A
+                if evento.key == pygame.K_RETURN and self.estado_juego == 'MENU':
+                    self.estado_juego = 'RUNNING'
+                if evento.key == pygame.K_SPACE and self.estado_juego in ['RUNNING', 'PAUSED']:
+                    self.estado_juego = 'PAUSED' if self.estado_juego == 'RUNNING' else 'RUNNING'
+                if evento.key == pygame.K_r and self.estado_juego != 'MENU':
+                    self.reiniciar()
+                if evento.key == pygame.K_d and self.estado_juego == 'RUNNING':
+                    # Cambio inmediato de modo, recalcula ruta y guarda camino recorrido
+                    self.modo_desarrollador = not self.modo_desarrollador
+                    self.robot.ruta_actual = []
+                    self.robot.esta_busqueda = False
+                    self.pathfinder.limpiar()
+                    # Guardar el camino recorrido en el modo anterior
+                    if self.modo_desarrollador:
+                        self.robot.camino_normal.extend([self.robot.rect.center])
+                    else:
+                        self.robot.camino_dev.extend([self.robot.rect.center])
+                if evento.key == pygame.K_s and self.modo_desarrollador and self.estado_juego == 'RUNNING':
+                    self.paso_dev = True  
+            if evento.type == pygame.KEYUP:
+                if evento.key == pygame.K_a:
+                    self.mantener_dev = False 
         return True
 
-    def update(self):
-        if self.game_state != 'RUNNING':
+    def actualizar(self):
+        if self.estado_juego != 'RUNNING':
             return
 
-        # Mantener A = continuo, S = paso único
-        keys = pygame.key.get_pressed()
-        if self.developer_mode:
-            self.dev_hold = keys[pygame.K_a]
+        teclas = pygame.key.get_pressed()
+        if self.modo_desarrollador:
+            self.mantener_dev = teclas[pygame.K_a]
 
-        new_game_state = self.robot.update(
-            self.world.balls,
-            self.world.station_rect,
-            self.world.basket_rect,
+        nuevo_estado = self.robot.actualizar(
+            self.mundo.pelotas,
+            self.mundo.rect_estacion,
+            self.mundo.rect_canasta,
             self.pathfinder,
-            developer_mode=self.developer_mode,
-            dev_step_request=self.dev_step_request,
-            dev_hold=self.dev_hold
+            modo_desarrollador=self.modo_desarrollador,
+            paso_dev=self.paso_dev,
+            mantener_dev=self.mantener_dev
         )
 
-        # paso a paso solo una vez con S
-        self.dev_step_request = False
+        self.paso_dev = False
 
-        if new_game_state:
-            self.game_state = new_game_state
+        if nuevo_estado:
+            self.estado_juego = nuevo_estado
 
-        # animación normal fuera del modo desarrollador
-        self.robot.animate_move(self.developer_mode)
+        self.robot.animar_movimiento(self.modo_desarrollador)
 
-    def render(self):
-        self.renderer.draw(self.game_state, self.world, self.robot, self.developer_mode, self.pathfinder)
+    def dibujar(self):
+        self.renderizador.dibujar(self.estado_juego, self.mundo, self.robot, self.modo_desarrollador, self.pathfinder)
 
 if __name__ == '__main__':
-    game = Game()
-    game.run()
+    juego = Game()
+    juego.ejecutar()

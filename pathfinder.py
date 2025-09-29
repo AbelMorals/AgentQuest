@@ -8,99 +8,99 @@ from config import Config
 # ==============================================================================
 class Pathfinder:
     def __init__(self):
-        self.clear()
+        self.limpiar()
 
-    def clear(self):
-        self.gscore = {}
-        self.came_from = {}
-        self.oheap = []
-        self.close_set = set()
-        self.goal_pos = None
-        self.obstacle_grid = set()
-        self.final_path = set()
+    def limpiar(self):
+        self.puntaje_g = {}
+        self.viene_de = {}
+        self.cola_abierta = []
+        self.conjunto_cerrado = set()
+        self.pos_objetivo = None
+        self.celdas_obstaculo = set()
+        self.camino_final = set()
 
     @staticmethod
-    def heuristic(a, b):
+    def heuristica(a, b):
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
     @staticmethod
-    def a_star(start_node, goal_node, obstacles):
-        start_pos = (start_node[0] // Config.GRID_SIZE, start_node[1] // Config.GRID_SIZE)
-        goal_pos = (goal_node[0] // Config.GRID_SIZE, goal_node[1] // Config.GRID_SIZE)
+    def a_estrella(nodo_inicio, nodo_objetivo, obstaculos):
+        pos_inicio = (nodo_inicio[0] // Config.TAMANO_CELDA, nodo_inicio[1] // Config.TAMANO_CELDA)
+        pos_objetivo = (nodo_objetivo[0] // Config.TAMANO_CELDA, nodo_objetivo[1] // Config.TAMANO_CELDA)
 
-        obstacle_grid = {(obs[0] // Config.GRID_SIZE, obs[1] // Config.GRID_SIZE) for obs in obstacles}
+        celdas_obstaculo = {(obs[0] // Config.TAMANO_CELDA, obs[1] // Config.TAMANO_CELDA) for obs in obstaculos}
 
-        neighbors = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        gscore = {start_pos: 0}
-        fscore = {start_pos: Pathfinder.heuristic(start_pos, goal_pos)}
-        oheap = []
-        heapq.heappush(oheap, (fscore[start_pos], start_pos))
-        came_from = {}
-        close_set = set()
+        vecinos = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        puntaje_g = {pos_inicio: 0}
+        puntaje_f = {pos_inicio: Pathfinder.heuristica(pos_inicio, pos_objetivo)}
+        cola_abierta = []
+        heapq.heappush(cola_abierta, (puntaje_f[pos_inicio], pos_inicio))
+        viene_de = {}
+        conjunto_cerrado = set()
 
-        while oheap:
-            current = heapq.heappop(oheap)[1]
-            if current == goal_pos:
-                path = []
-                while current in came_from:
-                    path.append(current)
-                    current = came_from[current]
-                path.reverse()
-                return [(p[0] * Config.GRID_SIZE + Config.GRID_SIZE // 2,
-                         p[1] * Config.GRID_SIZE + Config.GRID_SIZE // 2) for p in path]
+        while cola_abierta:
+            actual = heapq.heappop(cola_abierta)[1]
+            if actual == pos_objetivo:
+                camino = []
+                while actual in viene_de:
+                    camino.append(actual)
+                    actual = viene_de[actual]
+                camino.reverse()
+                return [(p[0] * Config.TAMANO_CELDA + Config.TAMANO_CELDA // 2,
+                         p[1] * Config.TAMANO_CELDA + Config.TAMANO_CELDA // 2) for p in camino]
 
-            close_set.add(current)
-            for dx, dy in neighbors:
-                neighbor = current[0] + dx, current[1] + dy
-                tentative_g = gscore[current] + 1
-                if tentative_g < gscore.get(neighbor, float('inf')):
-                    is_valid = (0 <= neighbor[0] < Config.WIDTH // Config.GRID_SIZE and
-                                Config.HUD_HEIGHT // Config.GRID_SIZE <= neighbor[1] < Config.HEIGHT // Config.GRID_SIZE and
-                                (neighbor not in obstacle_grid or neighbor == goal_pos))
-                    if is_valid:
-                        came_from[neighbor] = current
-                        gscore[neighbor] = tentative_g
-                        fscore_val = tentative_g + Pathfinder.heuristic(neighbor, goal_pos)
-                        heapq.heappush(oheap, (fscore_val, neighbor))
+            conjunto_cerrado.add(actual)
+            for dx, dy in vecinos:
+                vecino = actual[0] + dx, actual[1] + dy
+                g_tentativo = puntaje_g[actual] + 1
+                if g_tentativo < puntaje_g.get(vecino, float('inf')):
+                    es_valido = (0 <= vecino[0] < Config.ANCHO // Config.TAMANO_CELDA and
+                                 Config.ALTURA_HUD // Config.TAMANO_CELDA <= vecino[1] < Config.ALTO // Config.TAMANO_CELDA and
+                                 (vecino not in celdas_obstaculo or vecino == pos_objetivo))
+                    if es_valido:
+                        viene_de[vecino] = actual
+                        puntaje_g[vecino] = g_tentativo
+                        puntaje_f_val = g_tentativo + Pathfinder.heuristica(vecino, pos_objetivo)
+                        heapq.heappush(cola_abierta, (puntaje_f_val, vecino))
         return None
 
-    def start_search(self, start_node, goal_node, obstacles):
-        self.clear()
-        self.goal_pos = (goal_node[0] // Config.GRID_SIZE, goal_node[1] // Config.GRID_SIZE)
-        start_pos = (start_node[0] // Config.GRID_SIZE, start_node[1] // Config.GRID_SIZE)
-        self.obstacle_grid = {(obs[0] // Config.GRID_SIZE, obs[1] // Config.GRID_SIZE) for obs in obstacles}
+    def iniciar_busqueda(self, nodo_inicio, nodo_objetivo, obstaculos):
+        self.limpiar()
+        self.pos_objetivo = (nodo_objetivo[0] // Config.TAMANO_CELDA, nodo_objetivo[1] // Config.TAMANO_CELDA)
+        pos_inicio = (nodo_inicio[0] // Config.TAMANO_CELDA, nodo_inicio[1] // Config.TAMANO_CELDA)
+        self.celdas_obstaculo = {(obs[0] // Config.TAMANO_CELDA, obs[1] // Config.TAMANO_CELDA) for obs in obstaculos}
 
-        self.gscore = {start_pos: 0}
-        fscore = self.heuristic(start_pos, self.goal_pos)
-        heapq.heappush(self.oheap, (fscore, start_pos))
+        self.puntaje_g = {pos_inicio: 0}
+        puntaje_f = self.heuristica(pos_inicio, self.pos_objetivo)
+        heapq.heappush(self.cola_abierta, (puntaje_f, pos_inicio))
 
-    def step(self):
-        if not self.oheap:
+    def paso(self):
+        if not self.cola_abierta:
             return "NO_PATH"
 
-        current = heapq.heappop(self.oheap)[1]
-        if current == self.goal_pos:
-            path = []
-            while current in self.came_from:
-                path.append(current)
-                current = self.came_from[current]
-            path.reverse()
-            self.final_path = set(path)  # 🚨 Guardamos la ruta final
-            return [(p[0] * Config.GRID_SIZE + Config.GRID_SIZE // 2,
-                     p[1] * Config.GRID_SIZE + Config.GRID_SIZE // 2) for p in path]
+        actual = heapq.heappop(self.cola_abierta)[1]
+        if actual == self.pos_objetivo:
+            camino = []
+            while actual in self.viene_de:
+                camino.append(actual)
+                actual = self.viene_de[actual]
+            camino.reverse()
+            self.camino_final = set(camino)
+            return [(p[0] * Config.TAMANO_CELDA + Config.TAMANO_CELDA // 2,
+                     p[1] * Config.TAMANO_CELDA + Config.TAMANO_CELDA // 2) for p in camino]
 
-        self.close_set.add(current)
-        neighbors = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        for dx, dy in neighbors:
-            neighbor = current[0] + dx, current[1] + dy
-            tentative_g = self.gscore[current] + 1
-            if tentative_g < self.gscore.get(neighbor, float('inf')):
-                is_valid = (0 <= neighbor[0] < Config.WIDTH // Config.GRID_SIZE and
-                            Config.HUD_HEIGHT // Config.GRID_SIZE <= neighbor[1] < Config.HEIGHT // Config.GRID_SIZE and
-                            (neighbor not in self.obstacle_grid or neighbor == self.goal_pos))
-                if is_valid and neighbor not in self.close_set:
-                    self.came_from[neighbor] = current
-                    self.gscore[neighbor] = tentative_g
-                    fscore = tentative_g + self.heuristic(neighbor, self.goal_pos)
-                    heapq.heappush(self.oheap, (fscore, neighbor))
+        self.conjunto_cerrado.add(actual)
+        vecinos = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        for dx, dy in vecinos:
+            vecino = actual[0] + dx, actual[1] + dy
+            g_tentativo = self.puntaje_g[actual] + 1
+            if g_tentativo < self.puntaje_g.get(vecino, float('inf')):
+                es_valido = (0 <= vecino[0] < Config.ANCHO // Config.TAMANO_CELDA and
+                            Config.ALTURA_HUD // Config.TAMANO_CELDA <= vecino[1] < Config.ALTO // Config.TAMANO_CELDA and
+                            (vecino not in self.celdas_obstaculo or vecino == self.pos_objetivo))
+                if es_valido and vecino not in self.conjunto_cerrado:
+                    self.viene_de[vecino] = actual
+                    self.puntaje_g[vecino] = g_tentativo
+                    puntaje_f = g_tentativo + self.heuristica(vecino, self.pos_objetivo)
+                    heapq.heappush(self.cola_abierta, (puntaje_f, vecino))
         return "SEARCHING"
