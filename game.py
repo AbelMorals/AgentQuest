@@ -15,20 +15,22 @@ class Game:
     def __init__(self):
         pygame.init()
         self.pantalla = pygame.display.set_mode((Config.ANCHO, Config.ALTO))
-        pygame.display.set_caption("Robot Limpiador v2.1")
+        pygame.display.set_caption("Robot Limpiador v2.2")
         self.reloj = pygame.time.Clock()
-        self.estado_juego = 'MENU'
+        #self.estado_juego = 'MENU'
+        self.estado_juego = 'RUNNING'
         self.renderizador = Render(self.pantalla)
         self.pathfinder = Pathfinder()
         self.modo_desarrollador = False
         self.paso_dev = False  # para tecla S (paso a paso)
         self.mantener_dev = False  # para tecla A (continuo)
-        self.reiniciar()
+        self.reiniciar()    
 
     def reiniciar(self):
         self.mundo = World()
         self.robot = Robot(self.mundo.pos_inicio_robot[0], self.mundo.pos_inicio_robot[1])
-        self.estado_juego = 'MENU'
+        #self.estado_juego = 'MENU'
+        self.estado_juego = 'RUNNING'
         self.pathfinder.limpiar()
 
     def ejecutar(self):
@@ -87,7 +89,8 @@ class Game:
             self.pathfinder,
             modo_desarrollador=self.modo_desarrollador,
             paso_dev=self.paso_dev,
-            mantener_dev=self.mantener_dev
+            mantener_dev=self.mantener_dev,
+            obstaculos_extra=getattr(self.mundo, 'obstaculos', None)
         )
 
         self.paso_dev = False

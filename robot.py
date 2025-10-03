@@ -34,11 +34,11 @@ class Robot:
         self.camino_dev = []     # Guarda el camino recorrido en modo dev
 
     def actualizar(self, pelotas, rect_estacion, rect_canasta, pathfinder: Pathfinder,
-               modo_desarrollador=False, paso_dev=False, mantener_dev=False):
+               modo_desarrollador=False, paso_dev=False, mantener_dev=False, obstaculos_extra=None):
         """Devuelve nuevo estado de juego si aplica (GAME_OVER, GAME_OVER_STUCK...), o None."""
-        if self.carga <= 0 and self.estado != 'DEAD':
-            self.estado = 'DEAD'
-        if self.estado == 'DEAD':
+        if self.carga <= 0 and self.estado != 'MUERTO':
+            self.estado = 'MUERTO'
+        if self.estado == 'MUERTO':
             return None
 
         # En modo desarrollador avanzamos SOLO si se pide (tecla A) o se mantiene A pulsada.
@@ -51,8 +51,8 @@ class Robot:
                 return None
             self.ultima_decision = tiempo_actual
 
-        # RECHARGING
-        if self.estado == 'RECHARGING':
+        # RECARGANDO
+        if self.estado == 'RECARGANDO':
             if self.carga < Config.CARGA_MAXIMA:
                 self.carga += Config.TASA_RECARGA
             else:
@@ -85,7 +85,14 @@ class Robot:
 
             objetivo = self._obtener_objetivo(pelotas, rect_canasta, rect_estacion, pathfinder, modo_desarrollador)
             if objetivo:
+                # Obstáculos: pelotas, estación, canasta y obstáculos extra
                 obstaculos = set(pelotas) | {rect_estacion.center, rect_canasta.center}
+                if obstaculos_extra:
+                    for rect_obs in obstaculos_extra:
+                        # Añade todas las celdas ocupadas por el obstáculo
+                        for i in range(rect_obs.left, rect_obs.right, Config.TAMANO_CELDA):
+                            for j in range(rect_obs.top, rect_obs.bottom, Config.TAMANO_CELDA):
+                                obstaculos.add((i + Config.TAMANO_CELDA // 2, j + Config.TAMANO_CELDA // 2))
                 if self.estado == 'BUSCANDO' and self.pelota_objetivo in obstaculos:
                     obstaculos.discard(self.pelota_objetivo)
 
@@ -133,7 +140,7 @@ class Robot:
         if modo_desarrollador:
             return 
         
-        if not self.esta_moviendo or self.estado == 'DEAD':
+        if not self.esta_moviendo or self.estado == 'MUERTO':
             return
 
         if self.rect.x != self.objetivo_pixel_x:
@@ -150,23 +157,26 @@ class Robot:
             self.esta_moviendo = False
 
     def _obtener_objetivo(self, pelotas, rect_canasta, rect_estacion, pathfinder: Pathfinder, modo_desarrollador=False):
-        if self.estado == 'COLLECTING':
+        if self.estado == 'RECOGIDO':
             return rect_canasta.center
-        if self.estado == 'CHARGING':
+        if self.estado == 'CARGAR':
             return rect_estacion.center
 
         if self.estado == 'BUSCANDO' and pelotas:
-            pelotas_ordenadas = sorted(pelotas, key=lambda pelota: abs(pelota[0] - self.rect.centerx) + abs(pelota[1] - self.rect.centery))
-            if modo_desarrollador:
-                self.pelota_objetivo = pelotas_ordenadas[0]
+            mejor_pelota = None
+            mejor_ruta = None
+            mejor_longitud = math.inf
+            for pelota in pelotas:
+                obstaculos = set(pelotas) | {rect_estacion.center, rect_canasta.center}
+                obstaculos.discard(pelota)
+                ruta = pathfinder.a_estrella(self.rect.center, pelota, obstaculos)
+                if ruta is not None and len(ruta) < mejor_longitud:
+                    mejor_pelota = pelota
+                    mejor_ruta = ruta
+                    mejor_longitud = len(ruta)
+            if mejor_pelota:
+                self.pelota_objetivo = mejor_pelota
                 return self.pelota_objetivo
-            else:
-                for pelota in pelotas_ordenadas:
-                    obstaculos = set(pelotas) | {rect_estacion.center, rect_canasta.center}
-                    obstaculos.discard(pelota)
-                    if pathfinder.a_estrella(self.rect.center, pelota, obstaculos) is not None:
-                        self.pelota_objetivo = pelota
-                        return self.pelota_objetivo
         return None
 
     def _manejar_llegada(self, pelotas, rect_canasta, rect_estacion, pathfinder: Pathfinder):
@@ -177,11 +187,11 @@ class Robot:
                 if self.pelota_objetivo in pelotas:
                     pelotas.remove(self.pelota_objetivo)
                 self.lleva_pelota = True
-                self.estado = 'COLLECTING'
+                self.estado = 'RECOGIDO'
                 self.pelota_objetivo = None
                 tarea_completada = True
 
-        elif self.estado == 'COLLECTING':
+        elif self.estado == 'RECOGIDO':
             if Robot.esta_contenido(self.rect, rect_canasta):
                 self.recogidas += 1
                 self.lleva_pelota = False
@@ -195,9 +205,9 @@ class Robot:
                     if self.recogidas == 1:
                         self.dev_desbloqueado = True
 
-        elif self.estado == 'CHARGING':
+        elif self.estado == 'CARGAR':
             if Robot.esta_contenido(self.rect, rect_estacion):
-                self.estado = 'RECHARGING'
+                self.estado = 'RECARGANDO'
                 tarea_completada = True
 
         if tarea_completada:
@@ -206,11 +216,24 @@ class Robot:
         return None
 
     def _verificar_bateria_emergencia(self, pelotas, rect_canasta, rect_estacion, pathfinder: Pathfinder):
-        if self.carga <= Config.CARGA_EMERGENCIA and self.estado not in ['CHARGING', 'RECHARGING']:
-            if self.lleva_pelota:
+        if self.carga <= Config.CARGA_EMERGENCIA and self.estado not in ['CARGAR', 'RECARGANDO']:
+            # Si lleva la última pelota, verifica si puede llegar a la canasta
+            if self.lleva_pelota and self.recogidas == Config.NUM_PELOTAS - 1:
+                # Calcula ruta hasta la canasta
+                ruta = pathfinder.a_estrella(self.rect.center, rect_canasta.center, pelotas + [rect_estacion.center])
+                if ruta is not None:
+                    distancia = len(ruta)
+                    bateria_necesaria = distancia * Config.CARGA_POR_MOVIMIENTO
+                    if self.carga >= bateria_necesaria * Config.MARGEN_SEGURIDAD_BATERIA:
+                        # Puede llegar, no cambia a recargar
+                        return
+                # No puede llegar, suelta la pelota y va a recargar
                 pelotas.append(self.rect.center)
                 self.lleva_pelota = False
-            self.estado = 'CHARGING'
+            elif self.lleva_pelota:
+                pelotas.append(self.rect.center)
+                self.lleva_pelota = False
+            self.estado = 'CARGAR'
             self.ruta_actual = []
             self.esta_busqueda = False
             pathfinder.limpiar()
