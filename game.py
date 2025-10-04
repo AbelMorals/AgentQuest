@@ -6,6 +6,7 @@ from robot import Robot
 from world import World
 from pathfinder import Pathfinder
 
+pygame.init()
 # ==============================================================================
 # CLASE 6: Juego (Game)
 # Responsabilidad: Orquestar todo. Contiene el bucle principal, gestiona
@@ -13,12 +14,12 @@ from pathfinder import Pathfinder
 # ==============================================================================
 class Game:
     def __init__(self):
-        pygame.init()
-        self.pantalla = pygame.display.set_mode((Config.ANCHO, Config.ALTO))
-        pygame.display.set_caption("Robot Limpiador v2.2")
+        #pygame.init()
+        self.pantalla = pygame.display.set_mode((Config.ANCHO, Config.ALTO), pygame.FULLSCREEN)
+        pygame.display.set_caption("AgentQuest v2.2")
         self.reloj = pygame.time.Clock()
-        #self.estado_juego = 'MENU'
-        self.estado_juego = 'RUNNING'
+        self.estado_juego = 'MENU'
+        #self.estado_juego = 'RUNNING'
         self.renderizador = Render(self.pantalla)
         self.pathfinder = Pathfinder()
         self.modo_desarrollador = False
@@ -29,8 +30,8 @@ class Game:
     def reiniciar(self):
         self.mundo = World()
         self.robot = Robot(self.mundo.pos_inicio_robot[0], self.mundo.pos_inicio_robot[1])
-        #self.estado_juego = 'MENU'
-        self.estado_juego = 'RUNNING'
+        self.estado_juego = 'MENU'
+        #self.estado_juego = 'RUNNING'
         self.pathfinder.limpiar()
 
     def ejecutar(self):
@@ -54,24 +55,20 @@ class Game:
                     self.estado_juego = 'RUNNING'
                 if evento.key == pygame.K_SPACE and self.estado_juego in ['RUNNING', 'PAUSED']:
                     self.estado_juego = 'PAUSED' if self.estado_juego == 'RUNNING' else 'RUNNING'
-                if evento.key == pygame.K_r and self.estado_juego != 'MENU':
+                if evento.key == pygame.K_r:
                     self.reiniciar()
-                if evento.key == pygame.K_d and self.estado_juego == 'RUNNING':
-                    # Cambio inmediato de modo, recalcula ruta y guarda camino recorrido
+                if evento.key == pygame.K_d:
                     self.modo_desarrollador = not self.modo_desarrollador
                     self.robot.ruta_actual = []
                     self.robot.esta_busqueda = False
                     self.pathfinder.limpiar()
-                    # Guardar el camino recorrido en el modo anterior
+                    self.robot.sincronizar_posicion_animacion()
                     if self.modo_desarrollador:
                         self.robot.camino_normal.extend([self.robot.rect.center])
                     else:
                         self.robot.camino_dev.extend([self.robot.rect.center])
                 if evento.key == pygame.K_s and self.modo_desarrollador and self.estado_juego == 'RUNNING':
-                    self.paso_dev = True  
-            if evento.type == pygame.KEYUP:
-                if evento.key == pygame.K_a:
-                    self.mantener_dev = False 
+                    self.paso_dev = True 
         return True
 
     def actualizar(self):

@@ -32,14 +32,18 @@ class Pathfinder:
 
         vecinos = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         puntaje_g = {pos_inicio: 0}
-        puntaje_h = {pos_inicio: Pathfinder.heuristica(pos_inicio, pos_objetivo)}
+        
         lista_abierta = []
-        heapq.heappush(lista_abierta, (puntaje_h[pos_inicio], pos_inicio))
+        puntaje_h_inicial = Pathfinder.heuristica(pos_inicio, pos_objetivo)
+        heapq.heappush(lista_abierta, (puntaje_h_inicial, puntaje_h_inicial, pos_inicio))
+        
         viene_de = {}
         lista_cerrada = set()
 
         while lista_abierta:
-            actual = heapq.heappop(lista_abierta)[1]
+            # --- MODIFICADO: Obtener el tercer elemento [2] de la tupla ---
+            actual = heapq.heappop(lista_abierta)[2]
+            
             if actual == pos_objetivo:
                 camino = []
                 while actual in viene_de:
@@ -60,8 +64,9 @@ class Pathfinder:
                     if es_valido:
                         viene_de[vecino] = actual
                         puntaje_g[vecino] = g_tentativo
-                        puntaje_f = g_tentativo + Pathfinder.heuristica(vecino, pos_objetivo)
-                        heapq.heappush(lista_abierta, (puntaje_f, vecino))
+                        puntaje_h_val = Pathfinder.heuristica(vecino, pos_objetivo)
+                        puntaje_f_val = g_tentativo + puntaje_h_val
+                        heapq.heappush(lista_abierta, (puntaje_f_val, puntaje_h_val, vecino))
         return None
 
     def iniciar_busqueda(self, nodo_inicio, nodo_objetivo, obstaculos):
@@ -71,14 +76,16 @@ class Pathfinder:
         self.celdas_obstaculos = {(obs[0] // Config.TAMANO_CELDA, obs[1] // Config.TAMANO_CELDA) for obs in obstaculos}
 
         self.puntaje_g = {pos_inicio: 0}
-        puntaje_h = self.heuristica(pos_inicio, self.pos_objetivo)
-        heapq.heappush(self.lista_abierta, (puntaje_h, pos_inicio))
+        puntaje_h_inicial = self.heuristica(pos_inicio, self.pos_objetivo)
+        heapq.heappush(self.lista_abierta, (puntaje_h_inicial, puntaje_h_inicial, pos_inicio))
+
 
     def paso(self):
         if not self.lista_abierta:
             return "SIN_CAMINO"
 
-        actual = heapq.heappop(self.lista_abierta)[1]
+        actual = heapq.heappop(self.lista_abierta)[2]
+        
         if actual == self.pos_objetivo:
             camino = []
             while actual in self.viene_de:
@@ -93,7 +100,7 @@ class Pathfinder:
         vecinos = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         for dx, dy in vecinos:
             vecino = actual[0] + dx, actual[1] + dy
-            g_tentativo = self.puntaje_g[actual] + 1
+            g_tentativo = self.puntaje_g.get(actual, 0) + 1 
             if g_tentativo < self.puntaje_g.get(vecino, float('inf')):
                 es_valido = (0 <= vecino[0] < Config.ANCHO // Config.TAMANO_CELDA and
                             Config.ALTURA_HUD // Config.TAMANO_CELDA <= vecino[1] < Config.ALTO // Config.TAMANO_CELDA and
@@ -101,6 +108,7 @@ class Pathfinder:
                 if es_valido and vecino not in self.lista_cerrada:
                     self.viene_de[vecino] = actual
                     self.puntaje_g[vecino] = g_tentativo
-                    puntaje_h = g_tentativo + self.heuristica(vecino, self.pos_objetivo)
-                    heapq.heappush(self.lista_abierta, (puntaje_h, vecino))
+                    puntaje_h_val = self.heuristica(vecino, self.pos_objetivo)
+                    puntaje_f_val = g_tentativo + puntaje_h_val
+                    heapq.heappush(self.lista_abierta, (puntaje_f_val, puntaje_h_val, vecino))
         return "SEARCHING"

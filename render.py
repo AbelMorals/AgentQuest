@@ -13,7 +13,7 @@ class Render:
         pygame.font.init()
         self.fuente = pygame.font.SysFont("Arial", 22)
         self.fuente_pequena = pygame.font.SysFont("Consolas", 10)
-        self.fuente_grande = pygame.font.SysFont("Arial Black", 70)
+        self.fuente_grande = pygame.font.SysFont("Arial Black", 50)
         directorio_actual = os.path.dirname(os.path.abspath(__file__))
 
         # Mapeo de rectángulos a imágenes fijas para obstáculos
@@ -22,11 +22,17 @@ class Render:
         # Cargar imagen del robot
         ruta_imagen = os.path.join(directorio_actual, "Imagenes", "payaso.png")
         self.imagen_robot = pygame.image.load(ruta_imagen).convert_alpha()
-        self.imagen_robot = pygame.transform.scale(self.imagen_robot, (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
+        self.imagen_robot = pygame.transform.scale(self.imagen_robot, (Config.TAMANO_CELDA + 2, Config.TAMANO_CELDA + 2))
+        
         # Cargar imagen de la pelota
         ruta_pelota = os.path.join(directorio_actual, "Imagenes", "pelota.png")
         self.imagen_pelota = pygame.image.load(ruta_pelota).convert_alpha()
-        self.imagen_pelota = pygame.transform.scale(self.imagen_pelota, (Config.TAMANO_CELDA-5, Config.TAMANO_CELDA-5))
+        self.imagen_pelota = pygame.transform.scale(self.imagen_pelota, (Config.TAMANO_CELDA - 5, Config.TAMANO_CELDA - 5))
+
+        # Cargar imagen del césped
+        ruta_cesped = os.path.join(directorio_actual, "Imagenes", "cesped.png")
+        self.imagen_cesped = pygame.image.load(ruta_cesped).convert()
+        self.imagen_cesped = pygame.transform.scale(self.imagen_cesped, (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
 
         # Diccionario de imágenes de obstáculos por tamaño
         self.imagenes_obstaculos = {
@@ -35,8 +41,8 @@ class Render:
             (2, 3): ["cañon.png", "Fuerza.png", "globos64.png"],
             (3, 2): ["carro.png"],
             (4, 4): ["carpa.png"],
-            (10, 1): ["ilera.png", "ilera2.png"],
-            (1, 10): ["ilera2.png"]
+            (10, 1): ["ilera.png", "ilera2.png"]
+            #(1, 10): ["arofuego.png"]
         }
         self.obstaculo_imgs = {}
         for tam, nombres in self.imagenes_obstaculos.items():
@@ -51,8 +57,14 @@ class Render:
                     pass
 
     def dibujar(self, estado_juego, mundo, robot, modo_desarrollador, pathfinder):
-        self.pantalla.fill(Config.VERDE_OSCURO)
-        #self._dibujar_celda()
+        # === MODIFICACIÓN: Dibujar fondo condicionalmente ===
+        if modo_desarrollador:
+            self.pantalla.fill(Config.FONDO)
+            self._dibujar_cuadricula()
+        else:
+            self.pantalla.fill(Config.VERDE_OSCURO)
+            self._dibujar_fondo_cesped()
+        # =================================================
 
         # Dibujar obstáculos con imágenes fijas
         if hasattr(mundo, 'obstaculos'):
@@ -79,7 +91,6 @@ class Render:
         pygame.draw.rect(self.pantalla, Config.NEGRO, mundo.rect_estacion); pygame.draw.rect(self.pantalla, Config.BLANCO, mundo.rect_estacion, 2)
         pygame.draw.rect(self.pantalla, Config.CAFE, mundo.rect_canasta); pygame.draw.rect(self.pantalla, Config.BLANCO, mundo.rect_canasta, 2)
         for pos_pelota in mundo.pelotas:
-            # Dibujar la imagen de la pelota en vez de un círculo rojo
             x = pos_pelota[0] - Config.TAMANO_CELDA // 2
             y = pos_pelota[1] - Config.TAMANO_CELDA // 2
             self.pantalla.blit(self.imagen_pelota, (x, y))
@@ -93,6 +104,7 @@ class Render:
         pygame.display.flip()
 
     def _dibujar_puntajes_astar(self, pathfinder):
+        if not pathfinder.pos_objetivo: return
         for nodo, puntaje_g in pathfinder.puntaje_g.items():
             puntaje_h = pathfinder.heuristica(nodo, pathfinder.pos_objetivo)
             puntaje_p = puntaje_g + puntaje_h
@@ -100,38 +112,37 @@ class Render:
             px = nodo[0] * Config.TAMANO_CELDA
             py = nodo[1] * Config.TAMANO_CELDA
             tam = Config.TAMANO_CELDA
-
             color = Config.AMARILLO if nodo in pathfinder.camino_final else Config.BLANCO
-
-            # Solo los valores numéricos
+            
             texto_g = self.fuente_pequena.render(str(puntaje_g), True, color)
             texto_h = self.fuente_pequena.render(str(puntaje_h), True, color)
             texto_p = self.fuente_pequena.render(str(puntaje_p), True, color)
 
-            # g arriba a la izquierda
             self.pantalla.blit(texto_g, (px + 2, py + 2))
-            # h arriba a la derecha
             self.pantalla.blit(texto_h, (px + tam - texto_h.get_width() - 2, py + 2))
-            # p abajo al centro
             self.pantalla.blit(texto_p, (px + (tam // 2) - (texto_p.get_width() // 2), py + tam - texto_p.get_height() - 2))
 
-    def _dibujar_celda(self):
+    def _dibujar_fondo_cesped(self):
+        for x in range(0, Config.ANCHO, Config.TAMANO_CELDA):
+            for y in range(Config.ALTURA_HUD, Config.ALTO, Config.TAMANO_CELDA):
+                self.pantalla.blit(self.imagen_cesped, (x, y))
+    
+    def _dibujar_cuadricula(self):
         for x in range(0, Config.ANCHO, Config.TAMANO_CELDA):
             pygame.draw.line(self.pantalla, (40, 40, 60), (x, Config.ALTURA_HUD), (x, Config.ALTO))
         for y in range(Config.ALTURA_HUD, Config.ALTO, Config.TAMANO_CELDA):
             pygame.draw.line(self.pantalla, (40, 40, 60), (0, y), (Config.ANCHO, y))
 
     def _dibujar_robot(self, robot):
-        # Dibujar la imagen del robot en vez de un rectángulo
         rect = robot.rect
         self.pantalla.blit(self.imagen_robot, rect)
         if robot.lleva_pelota:
-            # Dibujar la imagen de la pelota más pequeña sobre el robot
-            tamano_pelota = Config.TAMANO_CELDA // 2
-            imagen_pelota_pequena = pygame.transform.scale(self.imagen_pelota, (tamano_pelota, tamano_pelota))
-            x = rect.centerx - tamano_pelota // 2
-            y = rect.centery - tamano_pelota // 2
-            self.pantalla.blit(imagen_pelota_pequena, (x, y))
+            # Calcular la posición de la celda de enfrente
+            pos_x = robot.rect.centerx + robot.direccion[0] * Config.TAMANO_CELDA
+            pos_y = robot.rect.centery + robot.direccion[1] * Config.TAMANO_CELDA
+            
+            # Dibujar la pelota en esa posición
+            self.pantalla.blit(self.imagen_pelota, self.imagen_pelota.get_rect(center=(pos_x, pos_y)))
 
     def _dibujar_hud(self, robot):
         pygame.draw.rect(self.pantalla, (10, 10, 20), (0, 0, Config.ANCHO, Config.ALTURA_HUD))
@@ -144,12 +155,11 @@ class Render:
         texto_estado = self.fuente.render(f"Estado: {robot.estado} | Recogidas: {robot.recogidas}/{Config.NUM_PELOTAS}", True, Config.BLANCO)
         self.pantalla.blit(texto_estado, (220, 17))
         
-
     def _dibujar_overlays(self, estado_juego):
         if estado_juego == 'MENU':
-            texto_menu = self.fuente_grande.render("ROBOT LIMPIADOR", True, Config.BLANCO)
+            texto_menu = self.fuente_grande.render("PARADISE CIRCUS", True, Config.NEGRO)
             self.pantalla.blit(texto_menu, (Config.ANCHO//2 - texto_menu.get_width()//2, Config.ALTO//2 - 100))
-            texto_inicio = self.fuente.render("Presiona ENTER para iniciar", True, Config.BLANCO)
+            texto_inicio = self.fuente.render("Presiona ENTER para iniciar", True, Config.NEGRO)
             self.pantalla.blit(texto_inicio, (Config.ANCHO//2 - texto_inicio.get_width()//2, Config.ALTO//2))
         elif estado_juego == 'PAUSED':
             overlay = pygame.Surface((Config.ANCHO, Config.ALTO), pygame.SRCALPHA)
