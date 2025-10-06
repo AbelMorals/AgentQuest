@@ -130,8 +130,8 @@ class Render:
             self.pantalla.blit(texto_p, (px + (tam // 2) - (texto_p.get_width() // 2), py + tam - texto_p.get_height() - 2))
 
     def _dibujar_fondo_cesped(self):
-        for x in range(0, Config.ANCHO, Config.TAMANO_CELDA):
-            for y in range(Config.ALTURA_HUD, Config.ALTO, Config.TAMANO_CELDA):
+        for x in range(0, Config.SCREEN_ANCHO, Config.TAMANO_CELDA):
+            for y in range(Config.ALTURA_HUD, Config.SCREEN_ALTO, Config.TAMANO_CELDA):
                 self.pantalla.blit(self.imagen_cesped, (x, y))
     
     def _dibujar_cuadricula(self):
@@ -152,7 +152,7 @@ class Render:
             self.pantalla.blit(self.imagen_pelota, self.imagen_pelota.get_rect(center=(pos_x, pos_y)))
 
     def _dibujar_hud(self, robot):
-        pygame.draw.rect(self.pantalla, (10, 10, 20), (0, 0, Config.ANCHO, Config.ALTURA_HUD))
+        pygame.draw.rect(self.pantalla, (10, 10, 20), (0, 0, Config.SCREEN_ANCHO, Config.ALTURA_HUD))
         ancho_barra, alto_barra = 200, 25
         proporcion_carga = max(0, robot.carga / Config.CARGA_MAXIMA)
         ancho_barra_actual = ancho_barra * proporcion_carga
@@ -169,7 +169,7 @@ class Render:
             texto_inicio = self.fuente.render("Presiona ENTER para iniciar", True, Config.NEGRO)
             self.pantalla.blit(texto_inicio, (Config.ANCHO//2 - texto_inicio.get_width()//2, Config.ALTO//2))
         elif estado_juego == 'PAUSED':
-            overlay = pygame.Surface((Config.ANCHO, Config.ALTO), pygame.SRCALPHA)
+            overlay = pygame.Surface((Config.SCREEN_ANCHO, Config.SCREEN_ALTO), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 150))
             self.pantalla.blit(overlay, (0, 0))
             titulo_pausa = self.fuente_grande.render("PAUSADO", True, Config.BLANCO)
