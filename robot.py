@@ -69,10 +69,9 @@ class Robot:
 
         # 2. SEGUNDO, si después de llegar seguimos sin ruta, buscamos una nueva.
         if not self.ruta_actual:
-            # --- El enfriamiento ahora solo protege la toma de decisiones ---
             tiempo_actual = pygame.time.get_ticks()
             if not modo_desarrollador and tiempo_actual - self.ultima_decision < Config.enfriamiento_decision_robot:
-                return None # "Pensando..."
+                return None
             
             # Lógica de búsqueda A* para modo desarrollador
             if modo_desarrollador and self.esta_busqueda:
@@ -89,7 +88,6 @@ class Robot:
                             return 'GAME_OVER_STUCK'
                 return None
             
-            # Decisión y cálculo de ruta
             self._verificar_bateria_emergencia(pelotas, rect_canasta, rect_estacion, pathfinder)
             
             obstaculos = set(p for p in pelotas) | {rect_estacion.center, rect_canasta.center}
@@ -163,18 +161,6 @@ class Robot:
                 self.rect.y = self.objetivo_pixel_y
         else:
             self.esta_moviendo = False
-       # if self.rect.x != self.objetivo_pixel_x:
-       #     direccion = 1 if self.objetivo_pixel_x > self.rect.x else -1
-       #     self.rect.x += Config.VELOCIDAD_ANIMACION_ROBOT * direccion
-       #     if (direccion == 1 and self.rect.x >= self.objetivo_pixel_x) or (direccion == -1 and self.rect.x <= self.objetivo_pixel_x):
-       #         self.rect.x = self.objetivo_pixel_x
-       # elif self.rect.y != self.objetivo_pixel_y:
-       #     direccion = 1 if self.objetivo_pixel_y > self.rect.y else -1
-       #     self.rect.y += Config.VELOCIDAD_ANIMACION_ROBOT * direccion
-       #     if (direccion == 1 and self.rect.y >= self.objetivo_pixel_y) or (direccion == -1 and self.rect.y <= self.objetivo_pixel_y):
-       #         self.rect.y = self.objetivo_pixel_y
-       # else:
-       #     self.esta_moviendo = False
 
     def _encontrar_posicion_entrega(self, rect_objetivo, obstaculos):
         vecinos = [(0, -1), (0, 1), (-1, 0), (1, 0)] # Arriba, Abajo, Izquierda, Derecha
@@ -187,7 +173,7 @@ class Robot:
                 posiciones_posibles.append(pos)
         
         if not posiciones_posibles:
-            return None # No hay lugar para entregar
+            return None 
 
         # Devuelve la posición más cercana al robot
         posiciones_posibles.sort(key=lambda p: Pathfinder.heuristica(self.rect.center, p))

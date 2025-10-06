@@ -29,6 +29,16 @@ class Render:
         self.imagen_pelota = pygame.image.load(ruta_pelota).convert_alpha()
         self.imagen_pelota = pygame.transform.scale(self.imagen_pelota, (Config.TAMANO_CELDA - 5, Config.TAMANO_CELDA - 5))
 
+        # Cargar imagen de la estación
+        ruta_estacion = os.path.join(directorio_actual, "Imagenes", "cama.png")
+        self.imagen_estacion = pygame.image.load(ruta_estacion).convert_alpha()
+        self.imagen_estacion = pygame.transform.scale(self.imagen_estacion, (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
+
+        # Cargar imagen de la canasta
+        ruta_canasta = os.path.join(directorio_actual, "Imagenes", "canasta.png")
+        self.imagen_canasta = pygame.image.load(ruta_canasta).convert_alpha()
+        self.imagen_canasta = pygame.transform.scale(self.imagen_canasta, (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
+
         # Cargar imagen del césped
         ruta_cesped = os.path.join(directorio_actual, "Imagenes", "cesped.png")
         self.imagen_cesped = pygame.image.load(ruta_cesped).convert()
@@ -41,8 +51,8 @@ class Render:
             (2, 3): ["cañon.png", "Fuerza.png", "globos64.png"],
             (3, 2): ["carro.png"],
             (4, 4): ["carpa.png"],
-            (10, 1): ["ilera.png", "ilera2.png"]
-            #(1, 10): ["arofuego.png"]
+            (10, 1): ["ilera.png", "ilera2.png"],
+            (1, 10): ["ilera3.png"]
         }
         self.obstaculo_imgs = {}
         for tam, nombres in self.imagenes_obstaculos.items():
@@ -57,14 +67,12 @@ class Render:
                     pass
 
     def dibujar(self, estado_juego, mundo, robot, modo_desarrollador, pathfinder):
-        # === MODIFICACIÓN: Dibujar fondo condicionalmente ===
         if modo_desarrollador:
             self.pantalla.fill(Config.FONDO)
             self._dibujar_cuadricula()
         else:
             self.pantalla.fill(Config.VERDE_OSCURO)
             self._dibujar_fondo_cesped()
-        # =================================================
 
         # Dibujar obstáculos con imágenes fijas
         if hasattr(mundo, 'obstaculos'):
@@ -75,7 +83,6 @@ class Render:
                 tam = (ancho, alto)
                 imgs = self.obstaculo_imgs.get(tam)
                 rect_key = (rect_obs.x, rect_obs.y, rect_obs.width, rect_obs.height)
-                # Asignar imagen fija si no está asignada
                 if rect_key not in self.obstaculo_rect_img:
                     if imgs:
                         self.obstaculo_rect_img[rect_key] = random.choice(imgs)
@@ -88,8 +95,8 @@ class Render:
                     gris = (120, 120, 120)
                     pygame.draw.rect(self.pantalla, gris, rect_obs)
 
-        pygame.draw.rect(self.pantalla, Config.NEGRO, mundo.rect_estacion); pygame.draw.rect(self.pantalla, Config.BLANCO, mundo.rect_estacion, 2)
-        pygame.draw.rect(self.pantalla, Config.CAFE, mundo.rect_canasta); pygame.draw.rect(self.pantalla, Config.BLANCO, mundo.rect_canasta, 2)
+        self.pantalla.blit(self.imagen_estacion, mundo.rect_estacion)
+        self.pantalla.blit(self.imagen_canasta, mundo.rect_canasta)
         for pos_pelota in mundo.pelotas:
             x = pos_pelota[0] - Config.TAMANO_CELDA // 2
             y = pos_pelota[1] - Config.TAMANO_CELDA // 2

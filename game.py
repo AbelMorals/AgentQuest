@@ -14,7 +14,6 @@ pygame.init()
 # ==============================================================================
 class Game:
     def __init__(self):
-        #pygame.init()
         self.pantalla = pygame.display.set_mode((Config.ANCHO, Config.ALTO), pygame.FULLSCREEN)
         pygame.display.set_caption("AgentQuest v2.2")
         self.reloj = pygame.time.Clock()
