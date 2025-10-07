@@ -18,7 +18,6 @@ class World:
         self.generar_disposicion()
 
     def generar_disposicion(self):
-        # Crea una disposición aleatoria para los objetos.
         while True:
             x = random.randrange(0, Config.ANCHO, Config.TAMANO_CELDA)
             y = random.randrange(Config.ALTURA_HUD, Config.ALTO, Config.TAMANO_CELDA)
@@ -30,7 +29,6 @@ class World:
         self.pelotas = []
         obstaculos_rects = [self.rect_estacion, self.rect_canasta, rect_robot]
 
-        # Generar obstáculos
         self.obstaculos = []
         obstaculo_tamanos = [
             (1, 1), (2, 2), (3, 2), (2, 3), (4, 4),
@@ -49,7 +47,6 @@ class World:
                 self.obstaculos.append(rect_obs)
                 obstaculos_rects.append(rect_obs)
 
-        # Generar pelotas evitando obstáculos
         while len(self.pelotas) < Config.NUM_PELOTAS:
             pelota_x = random.randrange(0, Config.ANCHO, Config.TAMANO_CELDA) + Config.TAMANO_CELDA // 2
             pelota_y = random.randrange(Config.ALTURA_HUD, Config.ALTO, Config.TAMANO_CELDA) + Config.TAMANO_CELDA // 2

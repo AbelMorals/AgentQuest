@@ -1,4 +1,5 @@
 import pygame
+import os
 # ==============================================================================
 # CLASE 1: Configuración (Config)
 # Responsabilidad: Almacenar todas las constantes y parámetros del juego.
@@ -16,7 +17,67 @@ class Config:
     SCREEN_ALTO = SCREEN_ALTO
     ANCHO = (SCREEN_ANCHO // TAMANO_CELDA) * TAMANO_CELDA
     ALTO = (SCREEN_ALTO // TAMANO_CELDA) * TAMANO_CELDA
-    #ANCHO, ALTO = 810, 600 + ALTURA_HUD
+    
+    TEMAS = {
+        "PC": {
+            "titulo": "Paradise Circus",
+            "carpeta": "CircoAssets",
+            "robot": "payaso.png",
+            "pelota": "pelota.png",
+            "estacion": "cama.png",
+            "canasta": "canasta.png",
+            "fondo": "cesped.png",
+            "obstaculos": {
+                (1, 1): ["arofuego.png", "arofuego2.png", "globos32.png", "paja.png"],
+                (2, 2): ["leon.png", "puesto.png", "puesto2.png", "puesto3.png", "puesto4.png"],
+                (2, 3): ["cañon.png", "Fuerza.png", "globos64.png"],
+                (3, 2): ["carro.png"],
+                (4, 4): ["carpa.png"],
+                (10, 1): ["ilera.png", "ilera2.png"],
+                (1, 10): ["ilera3.png"]
+            }
+        },
+        "KA": {
+            "titulo": "Knight's Adventure",
+            "carpeta": "CaballeroAssets",
+            "robot": "caballero.png",
+            "pelota": "monedas.png",
+            "estacion": "cama.png",
+            "canasta": "cofre.png",
+            "fondo": "fondo.png",
+            "obstaculos": {
+                (1, 1): ["roca.png", "barril.png", "escudo.png"],
+                (2, 2): ["tienda_medieval.png", "pozo.png", "armadura.png"],
+                (2, 3): ["muralla.png", "carreta.png"],
+                (3, 2): ["establo.png"],
+                (4, 4): ["torre.png"],
+                (10, 1): ["muro_largo.png"],
+                (1, 10): ["muro_alto.png"]
+            }
+        },
+        "CS": {
+            "titulo": "Cuauhcalli, The Temple of the Sun",
+            "carpeta": "GuerreroAssets",
+            "robot": "guerrero.png",
+            "pelota": "maiz.png",
+            "estacion": "piramide.png",
+            "canasta": "glifo.png",
+            "fondo": "piso_templo.png",
+            "obstaculos": {
+                (1, 1): ["bracero.png", "planta_selva.png", "piedra_tallada.png"],
+                (2, 2): ["estatua_jaguar.png", "muro_craneos.png", "fuente.png"],
+                (2, 3): ["muro_serpiente.png", "altar.png"],
+                (3, 2): ["cabeza_olmeca.png"],
+                (4, 4): ["templo_pequeño.png"],
+                (10, 1): ["acueducto.png"],
+                (1, 10): ["columna_tallada.png"]
+            }
+        }
+    }
+
+    POS_X_CENTRADA = (SCREEN_ANCHO - ANCHO) // 2
+    POS_Y_CENTRADA = (SCREEN_ALTO - ALTO) // 2
+    os.environ['SDL_VIDEO_WINDOW_POS'] = f"{POS_X_CENTRADA},{POS_Y_CENTRADA}"
 
     # Colores y Fuentes
     NEGRO = (0, 0, 0); BLANCO = (220, 220, 220); VERDE = (0, 200, 0)

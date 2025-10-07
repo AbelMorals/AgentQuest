@@ -1,5 +1,6 @@
 import pygame
 import os
+import random
 from config import Config
 
 # ==============================================================================
@@ -8,7 +9,7 @@ from config import Config
 # decisiones, solo dibuja lo que le dicen las otras clases.
 # ==============================================================================
 class Render:
-    def __init__(self, pantalla):
+    def __init__(self, pantalla, tema_key):
         self.pantalla = pantalla
         pygame.font.init()
         self.fuente = pygame.font.SysFont("Arial", 22)
@@ -16,57 +17,69 @@ class Render:
         self.fuente_grande = pygame.font.SysFont("Arial Black", 50)
         directorio_actual = os.path.dirname(os.path.abspath(__file__))
 
+        assets = Config.TEMAS[tema_key]
+        carpeta_tema = assets["carpeta"]
+
+        ruta_base_assets = os.path.join(directorio_actual, "Imagenes", carpeta_tema)
+        if not os.path.exists(ruta_base_assets):
+            ruta_base_assets = os.path.join(directorio_actual, "Imagenes", "PC")  # Carpeta por defecto
+
+        # Cargar imágenes usando la ruta base
+        self.imagen_robot = self.cargar_imagen(os.path.join(ruta_base_assets, assets["robot"]), (Config.TAMANO_CELDA + 2, Config.TAMANO_CELDA + 2))
+        self.imagen_pelota = self.cargar_imagen(os.path.join(ruta_base_assets, assets["pelota"]), (Config.TAMANO_CELDA - 5, Config.TAMANO_CELDA - 5))
+        self.imagen_estacion = self.cargar_imagen(os.path.join(ruta_base_assets, assets["estacion"]), (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
+        self.imagen_canasta = self.cargar_imagen(os.path.join(ruta_base_assets, assets["canasta"]), (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
+        self.imagen_fondo = self.cargar_imagen(os.path.join(ruta_base_assets, assets["fondo"]), (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
+
         # Mapeo de rectángulos a imágenes fijas para obstáculos
         self.obstaculo_rect_img = {}
-
-        # Cargar imagen del robot
-        ruta_imagen = os.path.join(directorio_actual, "Imagenes", "payaso.png")
-        self.imagen_robot = pygame.image.load(ruta_imagen).convert_alpha()
-        self.imagen_robot = pygame.transform.scale(self.imagen_robot, (Config.TAMANO_CELDA + 2, Config.TAMANO_CELDA + 2))
-        
-        # Cargar imagen de la pelota
-        ruta_pelota = os.path.join(directorio_actual, "Imagenes", "pelota.png")
-        self.imagen_pelota = pygame.image.load(ruta_pelota).convert_alpha()
-        self.imagen_pelota = pygame.transform.scale(self.imagen_pelota, (Config.TAMANO_CELDA - 5, Config.TAMANO_CELDA - 5))
-
-        # Cargar imagen de la estación
-        ruta_estacion = os.path.join(directorio_actual, "Imagenes", "cama.png")
-        self.imagen_estacion = pygame.image.load(ruta_estacion).convert_alpha()
-        self.imagen_estacion = pygame.transform.scale(self.imagen_estacion, (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
-
-        # Cargar imagen de la canasta
-        ruta_canasta = os.path.join(directorio_actual, "Imagenes", "canasta.png")
-        self.imagen_canasta = pygame.image.load(ruta_canasta).convert_alpha()
-        self.imagen_canasta = pygame.transform.scale(self.imagen_canasta, (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
-
-        # Cargar imagen del césped
-        ruta_cesped = os.path.join(directorio_actual, "Imagenes", "cesped.png")
-        self.imagen_cesped = pygame.image.load(ruta_cesped).convert()
-        self.imagen_cesped = pygame.transform.scale(self.imagen_cesped, (Config.TAMANO_CELDA, Config.TAMANO_CELDA))
-
-        # Diccionario de imágenes de obstáculos por tamaño
-        self.imagenes_obstaculos = {
-            (1, 1): ["arofuego.png", "arofuego2.png", "globos32.png", "paja.png"],
-            (2, 2): ["leon.png", "puesto.png", "puesto2.png", "puesto3.png", "puesto4.png"],
-            (2, 3): ["cañon.png", "Fuerza.png", "globos64.png"],
-            (3, 2): ["carro.png"],
-            (4, 4): ["carpa.png"],
-            (10, 1): ["ilera.png", "ilera2.png"],
-            (1, 10): ["ilera3.png"]
-        }
         self.obstaculo_imgs = {}
-        for tam, nombres in self.imagenes_obstaculos.items():
+        imagenes_obstaculos_config = assets.get("obstaculos", {})
+
+        for tam, nombres in imagenes_obstaculos_config.items():
             self.obstaculo_imgs[tam] = []
             for nombre in nombres:
-                ruta = os.path.join(directorio_actual, "Imagenes", nombre)
-                try:
-                    img = pygame.image.load(ruta).convert_alpha()
-                    img = pygame.transform.scale(img, (Config.TAMANO_CELDA * tam[0], Config.TAMANO_CELDA * tam[1]))
-                    self.obstaculo_imgs[tam].append(img)
-                except Exception:
-                    pass
+                ruta = os.path.join(ruta_base_assets, nombre)
+                img = self.cargar_imagen(ruta, (Config.TAMANO_CELDA * tam[0], Config.TAMANO_CELDA * tam[1]))
+                self.obstaculo_imgs[tam].append(img)
 
-    def dibujar(self, estado_juego, mundo, robot, modo_desarrollador, pathfinder):
+    def cargar_imagen(self, ruta, tamano, fallback=True):
+        try:
+            img = pygame.image.load(ruta).convert_alpha()
+            return pygame.transform.scale(img, tamano)
+        except (pygame.error, FileNotFoundError):
+            if fallback:
+                # Si una imagen no existe, crea un cuadrado rosa para que sea obvio
+                surf = pygame.Surface(tamano)
+                surf.fill((255, 0, 255))
+                return surf
+            return None
+        
+    @staticmethod
+    def dibujar_menu_seleccion(pantalla, opciones_keys, seleccionado_idx):
+        fuente_titulo = pygame.font.SysFont("Arial Black", 60)
+        fuente_opcion = pygame.font.SysFont("Arial", 40)
+        
+        titulo = fuente_titulo.render("SELECCIONA UN JUEGO", True, Config.BLANCO)
+        pantalla.blit(titulo, (Config.ANCHO // 2 - titulo.get_width() // 2, Config.ALTO // 4))
+
+        for i, key in enumerate(opciones_keys):
+            # --- MODIFICADO: Muestra el título completo, no la clave ---
+            titulo_opcion = Config.TEMAS[key]["titulo"]
+            color = Config.AMARILLO if i == seleccionado_idx else Config.BLANCO
+            texto = fuente_opcion.render(titulo_opcion, True, color)
+            pos_y = Config.ALTO // 2 + i * 50
+            pantalla.blit(texto, (Config.ANCHO // 2 - texto.get_width() // 2, pos_y))
+
+    def dibujar(self, estado_juego, mundo, robot, modo_desarrollador, pathfinder, opciones_menu, opcion_seleccionada):
+        if estado_juego == 'SELECCION':
+            self.pantalla.fill(Config.NEGRO)
+            Render.dibujar_menu_seleccion(self.pantalla, opciones_menu, opcion_seleccionada)
+            pygame.display.flip()
+            return
+        
+        self.pantalla.fill((10, 10, 20)) 
+        
         if modo_desarrollador:
             self.pantalla.fill(Config.FONDO)
             self._dibujar_cuadricula()
@@ -76,7 +89,6 @@ class Render:
 
         # Dibujar obstáculos con imágenes fijas
         if hasattr(mundo, 'obstaculos'):
-            import random
             for rect_obs in mundo.obstaculos:
                 ancho = rect_obs.width // Config.TAMANO_CELDA
                 alto = rect_obs.height // Config.TAMANO_CELDA
@@ -107,7 +119,7 @@ class Render:
 
         self._dibujar_robot(robot)
         self._dibujar_hud(robot)
-        self._dibujar_overlays(estado_juego)
+        self._dibujar_overlays(estado_juego, opciones_menu, opcion_seleccionada)
         pygame.display.flip()
 
     def _dibujar_puntajes_astar(self, pathfinder):
@@ -132,7 +144,7 @@ class Render:
     def _dibujar_fondo_cesped(self):
         for x in range(0, Config.SCREEN_ANCHO, Config.TAMANO_CELDA):
             for y in range(Config.ALTURA_HUD, Config.SCREEN_ALTO, Config.TAMANO_CELDA):
-                self.pantalla.blit(self.imagen_cesped, (x, y))
+                self.pantalla.blit(self.imagen_fondo, (x, y))
     
     def _dibujar_cuadricula(self):
         for x in range(0, Config.ANCHO, Config.TAMANO_CELDA):
@@ -161,10 +173,12 @@ class Render:
         pygame.draw.rect(self.pantalla, color_barra, (10, 15, ancho_barra_actual, alto_barra))
         texto_estado = self.fuente.render(f"Estado: {robot.estado} | Recogidas: {robot.recogidas}/{Config.NUM_PELOTAS}", True, Config.BLANCO)
         self.pantalla.blit(texto_estado, (220, 17))
-        
-    def _dibujar_overlays(self, estado_juego):
+
+    def _dibujar_overlays(self, estado_juego, opciones_menu_keys, opcion_seleccionada_idx):
         if estado_juego == 'MENU':
-            texto_menu = self.fuente_grande.render("PARADISE CIRCUS", True, Config.NEGRO)
+            clave_tema_actual = opciones_menu_keys[opcion_seleccionada_idx]
+            titulo = Config.TEMAS[clave_tema_actual]['titulo'].upper()
+            texto_menu = self.fuente_grande.render(titulo, True, Config.NEGRO)
             self.pantalla.blit(texto_menu, (Config.ANCHO//2 - texto_menu.get_width()//2, Config.ALTO//2 - 100))
             texto_inicio = self.fuente.render("Presiona ENTER para iniciar", True, Config.NEGRO)
             self.pantalla.blit(texto_inicio, (Config.ANCHO//2 - texto_inicio.get_width()//2, Config.ALTO//2))
