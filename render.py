@@ -43,7 +43,7 @@ class Render:
                 img = self.cargar_imagen(ruta, (Config.TAMANO_CELDA * tam[0], Config.TAMANO_CELDA * tam[1]))
                 self.obstaculo_imgs[tam].append(img)
 
-    def cargar_imagen(self, ruta, tamano, fallback=True):
+    def cargar_imagen(self, ruta, tamano, fallback=False):
         try:
             img = pygame.image.load(ruta).convert_alpha()
             return pygame.transform.scale(img, tamano)

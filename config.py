@@ -44,33 +44,33 @@ class Config:
             "pelota": "monedas.png",
             "estacion": "cama.png",
             "canasta": "cofre.png",
-            "fondo": "fondo.png",
+            "fondo": "cesped.png",
             "obstaculos": {
-                (1, 1): ["roca.png", "barril.png", "escudo.png"],
-                (2, 2): ["tienda_medieval.png", "pozo.png", "armadura.png"],
-                (2, 3): ["muralla.png", "carreta.png"],
-                (3, 2): ["establo.png"],
-                (4, 4): ["torre.png"],
-                (10, 1): ["muro_largo.png"],
-                (1, 10): ["muro_alto.png"]
+                (1, 1): ["aramadura.png", "escudo.png"],
+                (2, 2): ["roca.png", "casa2.png"],
+                (2, 3): ["leña.png","pino.png"],
+                (3, 2): ["casa.png","casa1.png"],
+                (4, 4): ["roca.png"],
+                (10, 1): ["cerco.png"],
+                (1, 10): ["cercaV.png"]
             }
         },
         "CS": {
             "titulo": "Cuauhcalli, The Temple of the Sun",
             "carpeta": "GuerreroAssets",
             "robot": "guerrero.png",
-            "pelota": "maiz.png",
-            "estacion": "piramide.png",
-            "canasta": "glifo.png",
-            "fondo": "piso_templo.png",
+            "pelota": "totem.png",
+            "estacion": "casa.png",
+            "canasta": "cofre.png",
+            "fondo": "cesped.png",
             "obstaculos": {
-                (1, 1): ["bracero.png", "planta_selva.png", "piedra_tallada.png"],
-                (2, 2): ["estatua_jaguar.png", "muro_craneos.png", "fuente.png"],
-                (2, 3): ["muro_serpiente.png", "altar.png"],
-                (3, 2): ["cabeza_olmeca.png"],
-                (4, 4): ["templo_pequeño.png"],
-                (10, 1): ["acueducto.png"],
-                (1, 10): ["columna_tallada.png"]
+                (1, 1): ["arco.png", "escudo.png", "jarra.png"],
+                (2, 2): ["pared.png", "estatua1.png", "estatua3.png", "estatua4.png"],
+                (2, 3): ["enemigo.png", "palmera.png"],
+                (3, 2): ["estatua2.png"],
+                (4, 4): ["piramide.png"],
+                (10, 1): ["rio.png","sembradio.png"],
+                (1, 10): ["rioVertical.png"]
             }
         }
     }
