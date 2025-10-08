@@ -1,4 +1,5 @@
 import pygame
+import os
 # ==============================================================================
 # CLASE 1: Configuración (Config)
 # Responsabilidad: Almacenar todas las constantes y parámetros del juego.
@@ -16,7 +17,76 @@ class Config:
     SCREEN_ALTO = SCREEN_ALTO
     ANCHO = (SCREEN_ANCHO // TAMANO_CELDA) * TAMANO_CELDA
     ALTO = (SCREEN_ALTO // TAMANO_CELDA) * TAMANO_CELDA
-    #ANCHO, ALTO = 810, 600 + ALTURA_HUD
+    
+    # --- Configuración de Imagen de Fondo ---
+    IMAGEN_FONDO_MENU_SELECCION = "wwa.jpg"
+    
+    # --- Configuración de Audio General ---
+    MUSICA_MENU = "menu-music.mp3" # Asume que está en Sonidos/Comunes
+    
+    TEMAS = {
+        "PC": {
+            "titulo": "Paradise Circus",
+            "carpeta": "CircoAssets",
+            "robot": "payaso.png",
+            "pelota": "pelota.png",
+            "estacion": "cama.png",
+            "canasta": "canasta.png",
+            "fondo": "cesped.png",
+            "musica_fondo": "circus-music.mp3", # NUEVO: Música del tema
+            "obstaculos": {
+                (1, 1): ["arofuego.png", "arofuego2.png", "globos32.png", "paja.png"],
+                (2, 2): ["leon.png", "puesto.png", "puesto2.png", "puesto3.png", "puesto4.png"],
+                (2, 3): ["cañon.png", "Fuerza.png", "globos64.png"],
+                (3, 2): ["carro.png"],
+                (4, 4): ["carpa.png"],
+                (10, 1): ["ilera.png", "ilera2.png"],
+                (1, 10): ["ilera3.png"]
+            }
+        },
+        "KA": {
+            "titulo": "Knight's Adventure",
+            "carpeta": "CaballeroAssets",
+            "robot": "caballero.png",
+            "pelota": "monedas.png",
+            "estacion": "cama.png",
+            "canasta": "cofre.png",
+            "fondo": "cesped.png",
+            "musica_fondo": "medieval-music.mp3", # NUEVO: Música del tema
+            "obstaculos": {
+                (1, 1): ["aramadura.png", "escudo.png"],
+                (2, 2): ["roca.png", "casa2.png"],
+                (2, 3): ["leña.png","pino.png"],
+                (3, 2): ["casa.png","casa1.png"],
+                (4, 4): ["roca.png"],
+                (10, 1): ["cerco.png"],
+                (1, 10): ["cercaV.png"]
+            }
+        },
+        "CS": {
+            "titulo": "Cuauhcalli, The Temple of the Sun",
+            "carpeta": "GuerreroAssets",
+            "robot": "guerrero.png",
+            "pelota": "totem.png",
+            "estacion": "casa.png",
+            "canasta": "cofre.png",
+            "fondo": "cesped.png",
+            "musica_fondo": "azteca-music.mp3", # NUEVO: Música del tema
+            "obstaculos": {
+                (1, 1): ["arco.png", "escudo.png", "jarra.png"],
+                (2, 2): ["pared.png", "estatua1.png", "estatua3.png", "estatua4.png"],
+                (2, 3): ["enemigo.png", "palmera.png"],
+                (3, 2): ["estatua2.png"],
+                (4, 4): ["piramide.png"],
+                (10, 1): ["rio.png","sembradio.png"],
+                (1, 10): ["rioVertical.png"]
+            }
+        }
+    }
+
+    POS_X_CENTRADA = (SCREEN_ANCHO - ANCHO) // 2
+    POS_Y_CENTRADA = (SCREEN_ALTO - ALTO) // 2
+    os.environ['SDL_VIDEO_WINDOW_POS'] = f"{POS_X_CENTRADA},{POS_Y_CENTRADA}"
 
     # Colores y Fuentes
     NEGRO = (0, 0, 0); BLANCO = (220, 220, 220); VERDE = (0, 200, 0)
