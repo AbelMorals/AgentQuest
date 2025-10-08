@@ -18,6 +18,12 @@ class Config:
     ANCHO = (SCREEN_ANCHO // TAMANO_CELDA) * TAMANO_CELDA
     ALTO = (SCREEN_ALTO // TAMANO_CELDA) * TAMANO_CELDA
     
+    # --- Configuración de Imagen de Fondo ---
+    IMAGEN_FONDO_MENU_SELECCION = "wwa.jpg"
+    
+    # --- Configuración de Audio General ---
+    MUSICA_MENU = "menu-music.mp3" # Asume que está en Sonidos/Comunes
+    
     TEMAS = {
         "PC": {
             "titulo": "Paradise Circus",
@@ -27,6 +33,7 @@ class Config:
             "estacion": "cama.png",
             "canasta": "canasta.png",
             "fondo": "cesped.png",
+            "musica_fondo": "circus-music.mp3", # NUEVO: Música del tema
             "obstaculos": {
                 (1, 1): ["arofuego.png", "arofuego2.png", "globos32.png", "paja.png"],
                 (2, 2): ["leon.png", "puesto.png", "puesto2.png", "puesto3.png", "puesto4.png"],
@@ -45,6 +52,7 @@ class Config:
             "estacion": "cama.png",
             "canasta": "cofre.png",
             "fondo": "cesped.png",
+            "musica_fondo": "medieval-music.mp3", # NUEVO: Música del tema
             "obstaculos": {
                 (1, 1): ["aramadura.png", "escudo.png"],
                 (2, 2): ["roca.png", "casa2.png"],
@@ -63,6 +71,7 @@ class Config:
             "estacion": "casa.png",
             "canasta": "cofre.png",
             "fondo": "cesped.png",
+            "musica_fondo": "azteca-music.mp3", # NUEVO: Música del tema
             "obstaculos": {
                 (1, 1): ["arco.png", "escudo.png", "jarra.png"],
                 (2, 2): ["pared.png", "estatua1.png", "estatua3.png", "estatua4.png"],

@@ -1,3 +1,4 @@
+# render.py
 import pygame
 import os
 import random
@@ -17,6 +18,15 @@ class Render:
         self.fuente_grande = pygame.font.SysFont("Arial Black", 50)
         directorio_actual = os.path.dirname(os.path.abspath(__file__))
 
+        # --- Cargar IMAGEN DE FONDO GENÉRICA para el menú de selección ---
+        # Asume que el fondo está en Imagenes/Comunes
+        ruta_fondo_seleccion = os.path.join(directorio_actual, "Imagenes", Config.IMAGEN_FONDO_MENU_SELECCION)
+        self.imagen_fondo_seleccion = self.cargar_imagen(
+            ruta_fondo_seleccion, 
+            (Config.SCREEN_ANCHO, Config.SCREEN_ALTO), 
+            fallback=True
+        )
+        
         assets = Config.TEMAS[tema_key]
         carpeta_tema = assets["carpeta"]
 
@@ -57,6 +67,8 @@ class Render:
         
     @staticmethod
     def dibujar_menu_seleccion(pantalla, opciones_keys, seleccionado_idx):
+        # El fondo lo dibuja el método dibujar de la instancia
+        
         fuente_titulo = pygame.font.SysFont("Arial Black", 60)
         fuente_opcion = pygame.font.SysFont("Arial", 40)
         
@@ -64,20 +76,26 @@ class Render:
         pantalla.blit(titulo, (Config.ANCHO // 2 - titulo.get_width() // 2, Config.ALTO // 4))
 
         for i, key in enumerate(opciones_keys):
-            # --- MODIFICADO: Muestra el título completo, no la clave ---
+            # --- Muestra el título completo, no la clave ---
             titulo_opcion = Config.TEMAS[key]["titulo"]
-            color = Config.AMARILLO if i == seleccionado_idx else Config.BLANCO
+            color = Config.AZUL if i == seleccionado_idx else Config.NEGRO
             texto = fuente_opcion.render(titulo_opcion, True, color)
             pos_y = Config.ALTO // 2 + i * 50
             pantalla.blit(texto, (Config.ANCHO // 2 - texto.get_width() // 2, pos_y))
 
     def dibujar(self, estado_juego, mundo, robot, modo_desarrollador, pathfinder, opciones_menu, opcion_seleccionada):
         if estado_juego == 'SELECCION':
-            self.pantalla.fill(Config.NEGRO)
+            # Dibuja la imagen de fondo del menú de selección
+            if self.imagen_fondo_seleccion:
+                self.pantalla.blit(self.imagen_fondo_seleccion, (0, 0))
+            else:
+                self.pantalla.fill(Config.NEGRO)
+                
             Render.dibujar_menu_seleccion(self.pantalla, opciones_menu, opcion_seleccionada)
             pygame.display.flip()
             return
         
+        # --- Lógica de Dibujo del Juego ---
         self.pantalla.fill((10, 10, 20)) 
         
         if modo_desarrollador:
@@ -93,13 +111,16 @@ class Render:
                 ancho = rect_obs.width // Config.TAMANO_CELDA
                 alto = rect_obs.height // Config.TAMANO_CELDA
                 tam = (ancho, alto)
-                imgs = self.obstaculo_imgs.get(tam)
                 rect_key = (rect_obs.x, rect_obs.y, rect_obs.width, rect_obs.height)
+                
+                # Asignar una imagen fija si aún no se ha hecho
                 if rect_key not in self.obstaculo_rect_img:
+                    imgs = self.obstaculo_imgs.get(tam)
                     if imgs:
                         self.obstaculo_rect_img[rect_key] = random.choice(imgs)
                     else:
                         self.obstaculo_rect_img[rect_key] = None
+                        
                 img = self.obstaculo_rect_img[rect_key]
                 if img:
                     self.pantalla.blit(img, rect_obs)
@@ -122,6 +143,7 @@ class Render:
         self._dibujar_overlays(estado_juego, opciones_menu, opcion_seleccionada)
         pygame.display.flip()
 
+    # ... (El resto de métodos auxiliares (_dibujar_puntajes_astar, _dibujar_fondo_cesped, etc.) se mantienen sin cambios)
     def _dibujar_puntajes_astar(self, pathfinder):
         if not pathfinder.pos_objetivo: return
         for nodo, puntaje_g in pathfinder.puntaje_g.items():
