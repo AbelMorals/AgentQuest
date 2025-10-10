@@ -80,7 +80,7 @@ class Config:
                 (1, 1): ["arco.png", "escudo.png", "jarra.png"],
                 (2, 2): ["pared.png", "estatua1.png", "estatua3.png", "estatua4.png"],
                 (2, 3): ["enemigo.png", "palmera.png"],
-                (3, 2): ["estatua2.png"],
+                (3, 2): ["estatua2.png", "mujerTortillas.png"],
                 (4, 4): ["piramide.png"],
                 (10, 1): ["rio.png","sembradio.png"],
                 (1, 10): ["rioVertical.png"]
