@@ -41,9 +41,12 @@ class Robot:
         
     def actualizar(self, pelotas, rect_estacion, rect_canasta, pathfinder: Pathfinder,
                modo_desarrollador=False, paso_dev=False, mantener_dev=False, obstaculos_extra=None):
-        if self.carga <= 0 and self.estado != 'MUERTO': self.estado = 'MUERTO'
-        if self.estado == 'MUERTO':
-            return None
+        if self.carga <= 0:
+            if self.estado != 'MUERTO':
+                self.estado = 'MUERTO'
+                return 'MUERTO' 
+            else:
+                return None
 
         # El modo dev no tiene enfriamiento de decisión
         if modo_desarrollador:

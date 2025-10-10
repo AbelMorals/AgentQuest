@@ -1,4 +1,4 @@
-# game.py (Versión Final Corregida de Rutas)
+# game.py (Versión Completa y Final)
 import pygame
 import sys
 import os
@@ -9,7 +9,11 @@ from world import World
 from pathfinder import Pathfinder
 
 pygame.init()
-
+# ==============================================================================
+# CLASE 6: Juego (Game)
+# Responsabilidad: Orquestar todo. Contener el bucle principal, gestionar
+# los eventos y decirle a las otras clases cuándo actuar.
+# ==============================================================================
 class Game:
     def __init__(self):
         # Configuración de la Pantalla
@@ -19,9 +23,12 @@ class Game:
 
         # GESTIÓN DE AUDIO (Inicialización)
         pygame.mixer.init()
-        # ⬅️ CORRECCIÓN 1: Usar 'Sonido' (singular) como indica tu estructura
+
+        # Ruta de la carpeta de sonidos (asumiendo 'Sonido' singular)
         self.ruta_base_sonidos = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Sonido")
-        
+        # Canal para efectos de sonido (SFX) para no interferir con la música
+        self.canal_sfx = pygame.mixer.Channel(0) 
+
         # Variables de Juego/Menú
         self.pathfinder = None
         self.mundo = None
@@ -38,14 +45,24 @@ class Game:
         # Iniciar el juego en el menú de selección de tema y la música del menú
         self._volver_al_menu_principal()
 
-    # ==========================================================================
     # LÓGICA DE AUDIO
-    # ==========================================================================
+    
+    def reproducir_sfx(self, nombre_archivo, loop=0):
+        """Carga y reproduce un efecto de sonido sin detener la música."""
+        try:
+            ruta = os.path.join(self.ruta_base_sonidos, nombre_archivo)
+            sfx = pygame.mixer.Sound(ruta)
+            self.canal_sfx.play(sfx, loop)
+            return True
+        except Exception as e:
+            print(f"Advertencia: No se pudo cargar el SFX '{nombre_archivo}': {e}")
+            return False
+
     def cargar_musica_menu(self):
         """Carga y reproduce la música de fondo para los estados de menú/selección."""
         try:
             pygame.mixer.music.stop() 
-            # ⬅️ CORRECCIÓN 2: Ruta directa. La música del menú está en la raíz de 'Sonido'.
+            self.canal_sfx.stop() 
             ruta = os.path.join(self.ruta_base_sonidos, Config.MUSICA_MENU)
             pygame.mixer.music.load(ruta)
             pygame.mixer.music.play(-1)
@@ -64,7 +81,7 @@ class Game:
         if nombre_musica:
             try:
                 pygame.mixer.music.stop() 
-                # ⬅️ CORRECCIÓN 3: Ruta directa. La música del tema está en la raíz de 'Sonido'.
+                self.canal_sfx.stop() 
                 ruta = os.path.join(self.ruta_base_sonidos, nombre_musica)
                 pygame.mixer.music.load(ruta)
                 pygame.mixer.music.play(-1)
@@ -74,10 +91,10 @@ class Game:
             pygame.mixer.music.stop()
             
 
-    # ==========================================================================
-    # LÓGICA DE ESTADO Y MENÚ (Mantenida de la última corrección)
-    # ==========================================================================
+    # LÓGICA DE ESTADO Y MENÚ
+
     def _volver_al_menu_principal(self):
+        """Reinicia el juego al estado inicial de selección de tema."""
         self.estado_juego = 'SELECCION'
         self.opciones_menu = list(Config.TEMAS.keys())
         self.opcion_seleccionada = 0
@@ -85,10 +102,11 @@ class Game:
         self.mundo = None
         self.robot = None
         self.modo_desarrollador = False
-        self.cargar_musica_menu() # Cargar la música del menú
+        self.cargar_musica_menu() 
         pygame.display.set_caption("AgentQuest v3.0")
 
     def reiniciar(self, tema_key):
+        """Prepara el mundo, el robot y el renderizador para el tema seleccionado."""
         self.tema_elegido = tema_key
         pygame.display.set_caption(Config.TEMAS[tema_key]["titulo"])
         self.render = Render(self.pantalla, tema_key)
@@ -129,7 +147,6 @@ class Game:
                     elif evento.key == pygame.K_DOWN:
                         self.opcion_seleccionada = (self.opcion_seleccionada + 1) % len(self.opciones_menu)
                     elif evento.key == pygame.K_RETURN:
-                        # Selecciona el tema, reinicia el mundo y pasa a 'MENU'
                         tema_key_elegido = self.opciones_menu[self.opcion_seleccionada]
                         self.reiniciar(tema_key_elegido)
                     continue
@@ -137,7 +154,7 @@ class Game:
                 # Iniciar la simulación desde el menú (ENTER)
                 if evento.key == pygame.K_RETURN and self.estado_juego == 'MENU':
                     self.estado_juego = 'RUNNING'
-                    self.cargar_musica_tema() # ⬅️ Inicia la música del mundo
+                    self.cargar_musica_tema()
                     continue
 
                 # Lógica de PAUSA/REANUDAR (SPACE)
@@ -150,18 +167,10 @@ class Game:
                         pygame.mixer.music.unpause()
                     continue
 
-                # Lógica de REINICIO SUAVE (R) ⬅️ CORRECCIÓN FINAL
-                # Reinicia el mundo actual y vuelve al estado 'MENU' (Menú de inicio del mundo).
+                # Lógica de REINICIO SUAVE (R)
                 if evento.key == pygame.K_r and self.tema_elegido and self.estado_juego != 'SELECCION':
-                    
-                    # 1. Se reinician todas las entidades del mundo (robot, pelotas, etc.).
                     self.reiniciar(self.tema_elegido) 
-                    
-                    # 2. El estado ya está en 'MENU' gracias a self.reiniciar().
-                    
-                    # 3. Se asegura que la música del tema esté sonando para el menú del mundo.
-                    self.cargar_musica_tema() 
-                    
+                    self.cargar_musica_tema() # Asegura que la música del tema suene en el menú del mundo
                     continue 
                     
                 # Lógica de Modo Desarrollador (D y S)
@@ -181,10 +190,12 @@ class Game:
         return True
 
     def actualizar(self):
-        if self.estado_juego != 'RUNNING': return
+        if self.estado_juego != 'RUNNING': 
+            return
 
         teclas = pygame.key.get_pressed()
-        if self.modo_desarrollador: self.mantener_dev = teclas[pygame.K_a]
+        if self.modo_desarrollador: 
+            self.mantener_dev = teclas[pygame.K_a]
 
         nuevo_estado = self.robot.actualizar(
             self.mundo.pelotas, self.mundo.rect_estacion, self.mundo.rect_canasta, self.pathfinder,
@@ -196,9 +207,18 @@ class Game:
 
         if nuevo_estado:
             self.estado_juego = nuevo_estado
-            if nuevo_estado in ['GAME_OVER', 'GAME_OVER_STUCK', 'MUERTO']:
-                 self.cargar_musica_menu()
-
+            
+            # Detener la música de fondo y reproducir SFX
+            pygame.mixer.music.stop()
+            
+            if nuevo_estado == 'GAME_OVER': # Éxito: Pelotas entregadas
+                self.reproducir_sfx(Config.SONIDO_VICTORIA)
+                
+            elif nuevo_estado in ['MUERTO', 'GAME_OVER_STUCK']: # Fallo: Batería agotada o Atascado
+                tema_assets = Config.TEMAS[self.tema_elegido]
+                nombre_gameover = tema_assets.get("sonido_gameover")
+                if nombre_gameover:
+                    self.reproducir_sfx(nombre_gameover)
         self.robot.animar_movimiento(self.modo_desarrollador)
 
     def dibujar(self):
