@@ -4,3 +4,4 @@ venv/
 ENV/
 .venv/
 .python_env/
+test/__pycache__
